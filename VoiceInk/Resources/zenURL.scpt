@@ -5,8 +5,6 @@ tell application "Zen Browser"
 		keystroke "l" using command down
 		delay 0.1
 		keystroke "c" using command down
-		delay 0.1
-		key code 53  -- Press Escape key to deselect address bar
 	end tell
 	delay 0.1
 	return (the clipboard as text)
