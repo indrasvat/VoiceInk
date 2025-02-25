@@ -742,6 +742,9 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         // Only cleanup temporary files, not the permanent recordings
         audioEngine.stopAudioEngine()
         
+        // Add a small delay to allow audio system to complete its operations
+        try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms delay
+        
         // Release whisper resources if not needed
         if !isRecording && !isProcessing {
             await whisperContext?.releaseResources()
@@ -785,6 +788,8 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         
         // 5. Finally clean up resources
         logger.info("Cleaning up resources")
+        // Add a small delay before cleanup to prevent audio overload
+        try? await Task.sleep(nanoseconds: 150_000_000)  // 150ms delay
         await cleanupResources()
         logger.info("Mini recorder dismissal completed")
     }
