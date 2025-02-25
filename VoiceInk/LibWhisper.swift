@@ -76,9 +76,18 @@ actor WhisperContext {
         params.translate        = false
         params.n_threads        = Int32(maxThreads)
         params.offset_ms        = 0
-        params.no_context       = true
+        params.no_context       = false
         params.single_segment   = false
-
+        
+        // Additional optimized parameters
+        params.suppress_blank = true
+        params.thold_pt = 0.01
+        
+        // Only set audio_ctx if we're not in single_segment mode
+        if !params.single_segment {
+            params.audio_ctx = 1500
+        }
+        
         whisper_reset_timings(context)
         print("About to run whisper_full")
         samples.withUnsafeBufferPointer { samples in
