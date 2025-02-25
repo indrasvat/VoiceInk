@@ -1,29 +1,13 @@
 import SwiftUI
 
-// Old format for migration
-private struct LegacyDictionaryItem: Codable {
-    let id: UUID
-    var word: String
-    var dateAdded: Date
-}
-
 struct DictionaryItem: Identifiable, Hashable, Codable {
     let id: UUID
     var word: String
     var dateAdded: Date
     var isEnabled: Bool
     
-    // Migration initializer
-    fileprivate init(from legacy: LegacyDictionaryItem) {
-        self.id = legacy.id
-        self.word = legacy.word
-        self.dateAdded = legacy.dateAdded
-        self.isEnabled = true // Default to enabled for migrated items
-    }
-    
-    // Standard initializer
-    init(word: String, dateAdded: Date = Date(), isEnabled: Bool = true) {
-        self.id = UUID()
+    init(id: UUID = UUID(), word: String, dateAdded: Date = Date(), isEnabled: Bool = true) {
+        self.id = id
         self.word = word
         self.dateAdded = dateAdded
         self.isEnabled = isEnabled
@@ -43,17 +27,10 @@ class DictionaryManager: ObservableObject {
     private func loadItems() {
         guard let data = UserDefaults.standard.data(forKey: saveKey) else { return }
         
-        // Try loading with new format first
         if let savedItems = try? JSONDecoder().decode([DictionaryItem].self, from: data) {
             items = savedItems.sorted(by: { $0.dateAdded > $1.dateAdded })
-        } else {
-            // If that fails, try loading old format and migrate
-            if let legacyItems = try? JSONDecoder().decode([LegacyDictionaryItem].self, from: data) {
-                items = legacyItems.map(DictionaryItem.init).sorted(by: { $0.dateAdded > $1.dateAdded })
-                // Save in new format immediately
-                saveItems()
-            }
         }
+        
         Task { @MainActor in
             await whisperState.saveDictionaryItems(items)
         }

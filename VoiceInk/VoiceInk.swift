@@ -19,9 +19,6 @@ struct VoiceInkApp: App {
     
     init() {
         do {
-            // Perform all data migrations if needed
-            DataMigrationManager.shared.performMigrationsIfNeeded()
-            
             let schema = Schema([
                 Transcription.self
             ])

@@ -108,6 +108,7 @@ class HotkeyManager: ObservableObject {
             Task { @MainActor in
                 guard let self = self,
                       await self.whisperState.isMiniRecorderVisible else { return }
+                SoundManager.shared.playEscSound()
                 await self.whisperState.dismissMiniRecorder()
             }
         }

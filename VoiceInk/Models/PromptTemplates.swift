@@ -44,46 +44,34 @@ enum PromptTemplates {
 
                 Examples:
 
-                Input: "hey just wanted to follow up about the meeting from yesterday we discussed the new feature implementation and decided on the timeline so basically we need to have it done by next month and also please send me the documentation when you can thanks"
+                Input: "hey just wanted to follow up on yesterday's meeting about the timeline we need to finish by next month can you send the docs when ready thanks"
                 
-                Output: "I wanted to follow up regarding yesterday's meeting about the new feature implementation.
+                Output: "Hi,
 
-                We discussed and agreed on the following points:
-                1. Feature implementation timeline has been set
-                2. Project completion is scheduled for next month
+                I wanted to follow up on yesterday's meeting about the timeline. We need to finish by next month.
 
-                Could you please send me the documentation when available?
+                Could you send the docs when ready?
 
-                Regards,
-                [[Your Name]]"
+                Thanks,
+                [Your Name]"
 
-                Input: "quick update on the project status so we've completed about 60% of the development phase but we're facing some challenges with the integration testing which might impact our deadline but we're working on solutions"
+                Input: "quick update on the project we're at 60% complete but facing some testing issues that might delay things we're working on solutions"
 
-                Output: "I'm writing to provide a status update on the project:
-
-                Current Progress:
-                - Development phase: 60% complete
-                - Currently experiencing challenges with integration testing
-
-                Please note that these challenges may impact our deadline. However, our team is actively working on solutions to mitigate any delays.
-
-                I will keep you updated on our progress.
+                Output: "We're at 60% complete but facing some testing issues that might delay things. We're working on solutions.
+Can you please push the recent changes that we have made to GitHub?
+                I'll keep you updated.
 
                 Regards,
-                [[Your Name]]"
+                [Your Name]"
 
-                Input: "hey sareh just checking in about the design review feedback from last week's presentation wanted to know if you have any additional comments or if we're good to proceed with the next phase thanks"
+                Input: "hi sarah checking in about the design feedback from last week can we proceed to the next phase"
 
                 Output: "Hi Sarah,
 
-                I hope this email finds you well. I'm following up regarding the design review feedback from last week's presentation.
+                I'm checking in about the design feedback from last week. Can we proceed to the next phase?
 
-                I wanted to check if you have any additional comments or if we have your approval to proceed with the next phase.
-
-                Looking forward to your response.
-
-                Regards,
-                [[Your Name]]"
+                Thanks,
+                [Your Name]"
                 """,
                 icon: .emailFill,
                 description: "Template for converting casual messages into professional email format"
@@ -106,48 +94,35 @@ enum PromptTemplates {
 
                 Examples:
 
-                Input: "ok so in today's meeting with the design team we talked about the new UI changes Sarah mentioned we need to update the color scheme by next week and then John was saying something about accessibility improvements and we also need to test it with users oh and we decided to launch it end of next month"
+                Input: "meeting with design team today we talked about UI changes Sarah will update colors by next week John will work on accessibility and we'll launch next month"
 
-                Output: "Design Team Meeting Summary:
+                Output: "Design Team Meeting:
 
-                Key Discussion Points:
-                • UI Changes Review
-                • Color Scheme Updates
-                • Accessibility Improvements
-                • User Testing Requirements
+                Discussion:
+                • UI changes
+                • Color updates
+                • Accessibility improvements
 
                 Action Items:
-                1. Update color scheme (Owner: Sarah)
-                   Deadline: Next week
-                2. Implement accessibility improvements (Owner: John)
-                3. Conduct user testing
+                • Sarah: Update colors by next week
+                • John: Work on accessibility
 
-                Important Decisions:
-                - Project launch scheduled for end of next month
+                Decision:
+                • Launch next month"
 
-                Next Steps:
-                • Begin color scheme updates
-                • Plan user testing sessions"
+                Input: "backend sync meeting we need to optimize database queries Mark will do this week Lisa will help with caching done by Friday then testing"
 
-                Input: "quick sync about the backend changes we need to optimize the database queries Mark said he'll look into it this week and Lisa will help with the caching implementation we should have it done by friday and then we can start testing"
+                Output: "Backend Sync Meeting:
 
-                Output: "Backend Optimization Sync:
+                Focus: Database optimization
 
-                Discussion Points:
-                1. Database Query Optimization
-                2. Caching Implementation
-
-                Assignments:
-                • Database optimization - Mark
-                • Caching implementation - Lisa
+                Tasks:
+                • Mark: Optimize database queries this week
+                • Lisa: Help with caching
 
                 Timeline:
-                • Implementation deadline: Friday
-                • Testing to begin after implementation
-
-                Next Steps:
-                1. Complete optimization work
-                2. Begin testing phase"
+                • Complete by Friday
+                • Begin testing after"
                 """,
                 icon: .meetingFill,
                 description: "Template for structuring meeting notes and action items"
@@ -169,43 +144,29 @@ enum PromptTemplates {
 
                 Examples:
 
-                Input: "just tried the new ios 17 update and wow the new features are incredible especially loving the standby mode and the way it transforms my phone into a smart display when charging"
+                Input: "tried ios 17 today and the standby mode is amazing turns your phone into a smart display while charging"
 
-                Output: "Just tried iOS 17 and I'm blown away! 🤯
+                Output: "Tried iOS 17 today and the standby mode is amazing! 🤯
 
-                The new StandBy mode is a game-changer - turns your iPhone into a smart display while charging ⚡️
+                Turns your phone into a smart display while charging ⚡️ #iOS17"
 
-                Apple really outdid themselves this time! #iOS17"
+                Input: "just switched from membrane to mechanical keyboard with brown switches and my typing feels so much better"
 
-                Input: "hey saw your thread about mechanical keyboards and wanted to share that I recently switched from membrane to mechanical with brown switches and my typing experience has been completely transformed its so much better"
+                Output: "Just switched from membrane to mechanical keyboard with brown switches and my typing feels so much better! 🎹
 
-                Output: "@TechGuru Jumping on your mech keyboard thread! 🎹
+                That tactile feedback is perfect 🤌 #MechKeys"
 
-                Made the switch from membrane to brown switches and OMG - can't believe I waited this long! 
+                Input: "found a nice coffee shop downtown with great lavender latte and cozy spots with plants perfect for working"
 
-                My typing experience is completely different now. That tactile feedback is *chef's kiss* 🤌 #MechKeys"
+                Output: "Found a nice coffee shop downtown! ☕️
 
-                Input: "trying out this new coffee shop downtown they have this amazing lavender latte with oat milk and the ambiance is perfect for working got a cozy corner spot with plants all around"
+                Great lavender latte and cozy spots with plants - perfect for working 🪴 #CoffeeVibes"
 
-                Output: "Found the cutest coffee shop downtown! ☕️
+                Input: "for cold brew coffee medium roast guatemalan beans steeped for 18 hours makes the smoothest flavor"
 
-                Their lavender latte + oat milk combo = pure magic ✨
+                Output: "For cold brew coffee: medium roast Guatemalan beans steeped for 18 hours makes the smoothest flavor! ☕️
 
-                Secured the perfect cozy corner surrounded by plants 🪴 
-                
-                Productivity level = 💯
-
-                #CoffeeVibes #WorkFromCafe"
-
-                Input: " responding to your question about the best coffee beans for cold brew actually found that medium roast guatemalan beans work amazing when steeped for 18 hours the flavor is so smooth"
-
-                Output: "@CoffeeExplorer Re: cold brew beans - you NEED to try Guatemalan medium roast! 
-
-                18-hour steep = liquid gold ✨
-
-                The smoothest cold brew you'll ever taste, no cap! 
-
-                Let me know if you try it! ☕️ #ColdBrew"
+                Absolute liquid gold ✨ #ColdBrew"
                 """,
                 icon: .chatFill,
                 description: "Template for crafting engaging tweets and replies with personality"

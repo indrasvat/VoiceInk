@@ -761,6 +761,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
 
     func cancelRecording() async {
         shouldCancelRecording = true
+        SoundManager.shared.playEscSound()
         if isRecording {
             await recorder.stopRecording()
         }

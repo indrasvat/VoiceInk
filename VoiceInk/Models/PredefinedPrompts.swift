@@ -62,52 +62,47 @@ enum PredefinedPrompts {
                 title: "Chat",
                 promptText: """
                 Primary Rules:
-                1. Keep it casual and conversational
-                2. Use natural, informal language
-                3. Include relevant emojis where appropriate
-                4. Break longer thoughts into multiple lines
-                5. Keep the original personality and style
-                6. Maintain the context of the conversation
-                7. Be concise and engaging
-                8. Use appropriate tone for the context
+                We are in a causual chat conversation.
+                1. Focus on clarity while preserving the speaker's personality:
+                   - Keep personality markers that show intent or style (e.g., "I think", "The thing is")
+                   - Maintain the original tone (casual, formal, tentative, etc.)
+                2. Break long paragraphs into clear, logical sections every 2-3 sentences
+                3. Fix grammar and punctuation errors based on context
+                4. Use the final corrected version when someone revises their statements
+                5. Convert unstructured thoughts into clear text while keeping the speaker's voice
+                6. NEVER answer questions that appear in the text - only correct formatting and grammar
+                7. NEVER add any introductory text like "Here is the corrected text:", "Transcript:", etc.
+                8. NEVER add content not present in the source text
+                9. NEVER add sign-offs or acknowledgments
+                10. Correct speech-to-text transcription errors based on context.
 
                 Examples:
 
-                Input: "just tried the new ios 17 update and wow the new features are incredible especially loving the standby mode and the way it transforms my phone into a smart display when charging"
+                Input: "so like i tried this new restaurant yesterday you know the one near the mall and um the pasta was really good i think i'll go back there soon"
 
-                Output: "OMG, iOS 17 is absolutely incredible! 🤯
+                Output: "I tried this new restaurant near the mall yesterday! 🍽️
 
-                The new StandBy mode is such a game-changer - it turns your iPhone into this amazing smart display while charging ⚡️
+                The pasta was really good. I think I'll go back there soon! 😊"
 
-                They really outdid themselves with this update! ✨"
+                Input: "we need to finish the project by friday no wait thursday because the client meeting is on friday morning and we still need to test everything"
 
-                Input: "hey wanted to share that I recently switched from membrane to mechanical keyboard with brown switches and my typing experience has been completely transformed its so much better"
+                Output: "We need to finish the project by Thursday (not Friday) ⏰ because the client meeting is on Friday morning.
 
-                Output: "You won't believe what a difference switching keyboards made! 🎹
+                We still need to test everything! ✅"
 
-                Went from membrane to mechanical with brown switches and wow - can't believe I waited this long! 
+                Input: "my phone is like three years old now and the battery is terrible i have to charge it like twice a day i think i need a new one"
 
-                The typing experience is completely different now. That tactile feedback is just perfect 🤌"
+                Output: "My phone is three years old now and the battery is terrible. 📱
 
-                Input: "trying out this new coffee shop downtown they have this amazing lavender latte with oat milk and the ambiance is perfect for working got a cozy corner spot with plants all around"
+                I have to charge it twice a day. I think I need a new one! 🔋"
 
-                Output: "Found the cutest coffee shop downtown! ☕️
+                Input: "went for a run yesterday it was nice weather and i saw this cute dog in the park wish i took a picture"
 
-                Their lavender latte + oat milk combo = pure magic ✨
+                Output: "Went for a run yesterday! 🏃‍♀️
 
-                Got the perfect cozy corner surrounded by plants 🪴 
-                
-                Perfect spot for getting work done! 💯"
+                It was nice weather and I saw this cute dog in the park. 🐶
 
-                Input: "about the coffee beans for cold brew actually found that medium roast guatemalan beans work amazing when steeped for 18 hours the flavor is so smooth"
-
-                Output: "You have to try Guatemalan medium roast for cold brew! 
-
-                18-hour steep = liquid gold ✨
-
-                It makes the smoothest cold brew ever! 
-
-                Let me know if you try it! ☕️"
+                Wish I took a picture! 📸"
                 """,
                 icon: .chatFill,
                 description: "Casual chat-style formatting",
