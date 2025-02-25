@@ -29,9 +29,6 @@ actor WhisperContext {
     func fullTranscribe(samples: [Float]) {
         guard let context = context else { return }
         
-        // Capture prompt state at start
-        let currentPrompt = prompt
-        
         // Leave 2 processors free (i.e. the high-efficiency cores).
         let maxThreads = max(1, min(8, cpuCount() - 2))
         print("Selecting \(maxThreads) threads")
@@ -52,12 +49,12 @@ actor WhisperContext {
         }
         
         // Only use prompt for English language
-        if selectedLanguage == "en" && currentPrompt != nil {
-            promptCString = Array(currentPrompt!.utf8CString)
+        if selectedLanguage == "en" && prompt != nil {
+            promptCString = Array(prompt!.utf8CString)
             params.initial_prompt = promptCString?.withUnsafeBufferPointer { ptr in
                 ptr.baseAddress
             }
-            print("Using prompt for English transcription: \(currentPrompt!)")
+            print("Using prompt for English transcription: \(prompt!)")
         } else {
             promptCString = nil
             params.initial_prompt = nil
@@ -76,18 +73,9 @@ actor WhisperContext {
         params.translate        = false
         params.n_threads        = Int32(maxThreads)
         params.offset_ms        = 0
-        params.no_context       = false
+        params.no_context       = true
         params.single_segment   = false
-        
-        // Additional optimized parameters
-        params.suppress_blank = true
-        params.thold_pt = 0.01
-        
-        // Only set audio_ctx if we're not in single_segment mode
-        if !params.single_segment {
-            params.audio_ctx = 1500
-        }
-        
+
         whisper_reset_timings(context)
         print("About to run whisper_full")
         samples.withUnsafeBufferPointer { samples in
@@ -149,4 +137,3 @@ actor WhisperContext {
 fileprivate func cpuCount() -> Int {
     ProcessInfo.processInfo.processorCount
 }
-
