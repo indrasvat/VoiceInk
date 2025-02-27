@@ -15,7 +15,7 @@
                             <li>Minor fixes & Improvements</li>
                         </ul>
             ]]></description>
-            <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v0.95/VoiceInk.dmg" length="5721468" type="application/octet-stream" sparkle:edSignature="i/E5T4CGy55EGJfiESHdiQCC1Tre4caaTALKSWIhKBCNV3cG42IODEoTwVksVb6gGONwzu3NhUtPCOlMs24VCQ=="/>
+            <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v.0.95/VoiceInk.dmg" length="5721468" type="application/octet-stream" sparkle:edSignature="i/E5T4CGy55EGJfiESHdiQCC1Tre4caaTALKSWIhKBCNV3cG42IODEoTwVksVb6gGONwzu3NhUtPCOlMs24VCQ=="/>
         </item>
     </channel>
 </rss>
