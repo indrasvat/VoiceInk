@@ -3,19 +3,19 @@
     <channel>
         <title>VoiceInk Releases</title>
         <item>
-            <title>0.92</title>
+            <title>0.95</title>
             <pubDate>Thu, 20 Feb 2025 07:51:55 +0545</pubDate>
-            <sparkle:version>94</sparkle:version>
-            <sparkle:shortVersionString>0.94</sparkle:shortVersionString>
+            <sparkle:version>95</sparkle:version>
+            <sparkle:shortVersionString>0.95</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
-                    <h3>What's New in Version 0.94 🚀⚡</h3>
+                    <h3>What's New in Version 0.95 🚀⚡</h3>
                         <ul>
-                            <li>New Sound Effects for Transcription activities</li>
-                            <li>Added the option to pause media playback during transcription</li>
+                            <li>More stats in dashboard</li>
+                            <li>Minor fixes & Improvements</li>
                         </ul>
             ]]></description>
-            <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v0.94/VoiceInk.dmg" length="5717874" type="application/octet-stream" sparkle:edSignature="5mSyd4LFsIN77wYWyuPnlNdfz+9YfG5DTYO6McXz0B27mAD56qMQQuu7ivJL6WPF0/Kyl9lPaFYz2rtSk7a2Dg=="/>
+            <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v0.95/VoiceInk.dmg" length="5721468" type="application/octet-stream" sparkle:edSignature="i/E5T4CGy55EGJfiESHdiQCC1Tre4caaTALKSWIhKBCNV3cG42IODEoTwVksVb6gGONwzu3NhUtPCOlMs24VCQ=="/>
         </item>
     </channel>
 </rss>
