@@ -1,5 +1,3 @@
-# <img src="VoiceInk/Assets.xcassets/AppIcon.appiconset/64-mac.png" width="32" height="32" /> VoiceInk
-
 <div align="center">
   <img src="VoiceInk/Assets.xcassets/AppIcon.appiconset/256-mac.png" width="180" height="180" />
   <h1>VoiceInk</h1>
@@ -10,8 +8,6 @@
   [![GitHub release (latest by date)](https://img.shields.io/github/v/release/Beingpax/VoiceInk)](https://github.com/Beingpax/VoiceInk/releases)
   ![GitHub all releases](https://img.shields.io/github/downloads/Beingpax/VoiceInk/total)
   ![GitHub stars](https://img.shields.io/github/stars/Beingpax/VoiceInk?style=social)
-  <!-- Add Discord badge once link is provided -->
-
   <p>
     <a href="https://tryvoiceink.com">Website</a> •
     <a href="https://www.youtube.com/@tryvoiceink">YouTube</a>
