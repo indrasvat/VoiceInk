@@ -292,17 +292,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                             // Step 1: Apply power mode configuration
                             await ActiveWindowService.shared.applyConfigurationForCurrentApp()
                             
-                            // Step 2: Handle screen capture if enabled by the configuration
-                            if let enhancementService = self.enhancementService,
-                               enhancementService.isEnhancementEnabled &&
-                               enhancementService.useScreenCaptureContext {
-                                await MainActor.run {
-                                    self.messageLog += "Capturing screen context...\n"
-                                }
-                                await enhancementService.captureScreenContext()
-                            }
-                            
-                            // Step 3: Load model if needed
+                            // Step 2: Load model if needed
                             if let currentModel = self.currentModel, self.whisperContext == nil {
                                 do {
                                     try await self.loadModel(currentModel)

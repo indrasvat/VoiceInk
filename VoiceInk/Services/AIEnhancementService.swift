@@ -22,6 +22,16 @@ class AIEnhancementService: ObservableObject {
                 // Select the first prompt (default) if none is selected
                 selectedPromptId = customPrompts.first?.id
             }
+            
+            // Cancel any existing capture task
+            currentCaptureTask?.cancel()
+            
+            // Trigger screen capture when enhancement is enabled and screen capture is on
+            if isEnhancementEnabled && useScreenCaptureContext {
+                currentCaptureTask = Task {
+                    await captureScreenContext()
+                }
+            }
         }
     }        
     @Published var useClipboardContext: Bool {
@@ -67,6 +77,7 @@ class AIEnhancementService: ObservableObject {
     
     private let aiService: AIService
     private let screenCaptureService: ScreenCaptureService
+    private var currentCaptureTask: Task<Void, Never>?
     private let maxRetries = 3
     private let baseTimeout: TimeInterval = 4
     private let rateLimitInterval: TimeInterval = 1.0 // 1 request per second
