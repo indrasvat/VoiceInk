@@ -1,7 +1,9 @@
 import Foundation
-import Cocoa
+import AppKit
 
 class CursorPaster {
+    private static let pasteCompletionDelay: TimeInterval = 0.3
+    
     static func pasteAtCursor(_ text: String) {
         guard AXIsProcessTrusted() else {
             print("Accessibility permissions not granted. Cannot paste at cursor.")
@@ -33,8 +35,9 @@ class CursorPaster {
         vUp?.post(tap: .cghidEventTap)
         cmdUp?.post(tap: .cghidEventTap)
         
-        // Restore the original pasteboard contents
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        // Restore the original pasteboard contents after a delay
+        // Use a background queue to not block the main thread
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + pasteCompletionDelay) {
             if let oldContents = oldContents {
                 pasteboard.clearContents()
                 pasteboard.setString(oldContents, forType: .string)

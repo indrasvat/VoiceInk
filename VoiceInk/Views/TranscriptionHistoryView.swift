@@ -536,9 +536,10 @@ struct TranscriptionCard: View {
     }
     
     private func copyToClipboard(_ text: String) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
+        let success = ClipboardManager.copyToClipboard(text)
+        if !success {
+            print("Failed to copy text to clipboard")
+        }
     }
     
     private func formatDuration(_ duration: TimeInterval) -> String {

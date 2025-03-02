@@ -563,8 +563,13 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             SoundManager.shared.playStopSound()
             
             if isAutoCopyEnabled {
-                ClipboardManager.copyToClipboard(text)
-                clipboardMessage = "Transcription copied to clipboard"
+                let success = ClipboardManager.copyToClipboard(text)
+                if success {
+                    clipboardMessage = "Transcription copied to clipboard"
+                } else {
+                    clipboardMessage = "Failed to copy to clipboard"
+                    messageLog += "Failed to copy transcription to clipboard\n"
+                }
             }
             
             if AXIsProcessTrusted() {
@@ -574,11 +579,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 }
             } else {
                 messageLog += "Accessibility permissions not granted. Transcription not pasted automatically.\n"
-            }
-            
-            Task {
-                try await Task.sleep(nanoseconds: 3_000_000_000)
-                clipboardMessage = ""
             }
             
             await cleanupResources()
@@ -626,16 +626,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             messageLog += "Error deleting model: \(error.localizedDescription)\n"
             currentError = .modelDeletionFailed
         }
-    }
-
-    private func copyToClipboard(_ text: String) {
-        #if os(macOS)
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
-        #else
-        UIPasteboard.general.string = text
-        #endif
     }
 
     @Published var isVisualizerActive = false

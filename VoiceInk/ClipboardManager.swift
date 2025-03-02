@@ -1,14 +1,20 @@
 import SwiftUI
+import AppKit
 
 struct ClipboardManager {
-    static func copyToClipboard(_ text: String) {
-        #if os(macOS)
+    enum ClipboardError: Error {
+        case copyFailed
+        case accessDenied
+    }
+    
+    static func copyToClipboard(_ text: String) -> Bool {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
-        #else
-        UIPasteboard.general.string = text
-        #endif
+        return pasteboard.setString(text, forType: .string)
+    }
+    
+    static func getClipboardContent() -> String? {
+        return NSPasteboard.general.string(forType: .string)
     }
 }
 
