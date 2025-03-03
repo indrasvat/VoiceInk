@@ -26,7 +26,7 @@ class MediaController: ObservableObject {
     // Additional function pointers for direct control
     private var mrSendCommand: (@convention(c) (Int, [String: Any]?) -> Bool)?
     
-    // MediaRemote command constants
+    // MediaRemote command constantst
     private let kMRPlay = 0
     private let kMRPause = 1
     private let kMRTogglePlayPause = 2

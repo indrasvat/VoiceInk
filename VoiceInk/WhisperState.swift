@@ -552,6 +552,17 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             // Play stop sound when transcription is complete
             SoundManager.shared.playStopSound()
             
+            // First try to paste if accessibility permissions are granted
+            if AXIsProcessTrusted() {
+                // For notch recorder, paste right after animation starts (animation takes 0.3s)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    CursorPaster.pasteAtCursor(text)
+                }
+            } else {
+                messageLog += "Accessibility permissions not granted. Transcription not pasted automatically.\n"
+            }
+            
+            // Then copy to clipboard if enabled (as a backup)
             if isAutoCopyEnabled {
                 let success = ClipboardManager.copyToClipboard(text)
                 if success {
@@ -560,15 +571,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                     clipboardMessage = "Failed to copy to clipboard"
                     messageLog += "Failed to copy transcription to clipboard\n"
                 }
-            }
-            
-            if AXIsProcessTrusted() {
-                // For notch recorder, paste right after animation starts (animation takes 0.3s)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    CursorPaster.pasteAtCursor(text)
-                }
-            } else {
-                messageLog += "Accessibility permissions not granted. Transcription not pasted automatically.\n"
             }
             
             await cleanupResources()

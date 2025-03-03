@@ -35,12 +35,16 @@ class CursorPaster {
         vUp?.post(tap: .cghidEventTap)
         cmdUp?.post(tap: .cghidEventTap)
         
-        // Restore the original pasteboard contents after a delay
-        // Use a background queue to not block the main thread
-        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + pasteCompletionDelay) {
-            if let oldContents = oldContents {
-                pasteboard.clearContents()
-                pasteboard.setString(oldContents, forType: .string)
+        // First clear the clipboard of our pasted content
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.1) {
+            pasteboard.clearContents()
+            
+            // Then restore the original content after a short delay
+            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.2) {
+                if let oldContents = oldContents {
+                    pasteboard.clearContents()
+                    pasteboard.setString(oldContents, forType: .string)
+                }
             }
         }
     }
