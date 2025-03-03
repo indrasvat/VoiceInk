@@ -2,7 +2,7 @@ import SwiftUI
 
 struct DictionarySettingsView: View {
     @State private var selectedSection: DictionarySection = .spellings
-    @EnvironmentObject private var whisperState: WhisperState
+    let whisperPrompt: WhisperPrompt
     
     enum DictionarySection: String, CaseIterable {
         case spellings = "Correct Spellings"
@@ -94,7 +94,7 @@ struct DictionarySettingsView: View {
         VStack(alignment: .leading, spacing: 20) {
             switch selectedSection {
             case .spellings:
-                DictionaryView(whisperState: whisperState)
+                DictionaryView(whisperPrompt: whisperPrompt)
                     .background(Color(.windowBackgroundColor).opacity(0.4))
                     .cornerRadius(10)
             case .replacements:

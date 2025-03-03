@@ -6,58 +6,6 @@ import AppKit
 import KeyboardShortcuts
 import os
 
-enum WhisperStateError: Error, Identifiable {
-    case modelLoadFailed
-    case transcriptionFailed
-    case recordingFailed
-    case accessibilityPermissionDenied
-    case modelDownloadFailed
-    case modelDeletionFailed
-    case unknownError
-    
-    var id: String { UUID().uuidString }
-}
-
-extension WhisperStateError: LocalizedError {
-    var errorDescription: String? {
-        switch self {
-        case .modelLoadFailed:
-            return "Failed to load the transcription model."
-        case .transcriptionFailed:
-            return "Failed to transcribe the audio."
-        case .recordingFailed:
-            return "Failed to start or stop recording."
-        case .accessibilityPermissionDenied:
-            return "Accessibility permission is required for automatic pasting."
-        case .modelDownloadFailed:
-            return "Failed to download the model."
-        case .modelDeletionFailed:
-            return "Failed to delete the model."
-        case .unknownError:
-            return "An unknown error occurred."
-        }
-    }
-    
-    var recoverySuggestion: String? {
-        switch self {
-        case .modelLoadFailed:
-            return "Try selecting a different model or redownloading the current model."
-        case .transcriptionFailed:
-            return "Check your audio input and try again. If the problem persists, try a different model."
-        case .recordingFailed:
-            return "Check your microphone permissions and try again."
-        case .accessibilityPermissionDenied:
-            return "Go to System Preferences > Security & Privacy > Privacy > Accessibility and allow VoiceInk."
-        case .modelDownloadFailed:
-            return "Check your internet connection and try again. If the problem persists, try a different model."
-        case .modelDeletionFailed:
-            return "Restart the application and try again. If the problem persists, you may need to manually delete the model file."
-        case .unknownError:
-            return "Please restart the application. If the problem persists, contact support."
-        }
-    }
-}
-
 @MainActor
 class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     @Published var isModelLoaded = false
@@ -73,7 +21,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     @Published var isProcessing = false
     @Published var shouldCancelRecording = false
     @Published var isTranscribing = false
-    @Published var transcriptionPrompt: String = UserDefaults.standard.string(forKey: "TranscriptionPrompt") ?? ""
     @Published var isAutoCopyEnabled: Bool = UserDefaults.standard.object(forKey: "IsAutoCopyEnabled") as? Bool ?? true {
         didSet {
             UserDefaults.standard.set(isAutoCopyEnabled, forKey: "IsAutoCopyEnabled")
@@ -88,17 +35,10 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     private var whisperContext: WhisperContext?
     private let recorder = Recorder()
     private var recordedFile: URL? = nil
-    private var dictionaryWords: [String] = []
-    private let saveKey = "CustomDictionaryItems"
+    let whisperPrompt = WhisperPrompt()
     
     let modelContext: ModelContext
     
-    private let basePrompt = """
-    Hey, How are you doing? Are you good? It's nice to meet after so long.
-    
-    """
-    
-
     private var modelUrl: URL? {
         let possibleURLs = [
             Bundle.main.url(forResource: "ggml-base.en", withExtension: "bin", subdirectory: "Models"),
@@ -108,12 +48,9 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         
         for url in possibleURLs {
             if let url = url, FileManager.default.fileExists(atPath: url.path) {
-                print("Model found at: \(url.path)")
                 return url
             }
         }
-        
-        print("Model not found in any of the expected locations")
         return nil
     }
     
@@ -124,15 +61,11 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     private let modelsDirectory: URL
     private let recordingsDirectory: URL
     private var transcriptionStartTime: Date?
-    
     private var enhancementService: AIEnhancementService?
-    
     private let licenseViewModel: LicenseViewModel
-    
     private var notchWindowManager: NotchWindowManager?
     private var miniWindowManager: MiniWindowManager?
     var audioEngine: AudioEngine
-    
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "WhisperState")
     
     init(modelContext: ModelContext, enhancementService: AIEnhancementService? = nil) {
@@ -151,78 +84,52 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         createModelsDirectoryIfNeeded()
         createRecordingsDirectoryIfNeeded()
         loadAvailableModels()
-        loadDictionaryItems()
         
-        // Load saved model
         if let savedModelName = UserDefaults.standard.string(forKey: "CurrentModel"),
            let savedModel = availableModels.first(where: { $0.name == savedModelName }) {
             currentModel = savedModel
-            print("Initialized with model: \(savedModel.name)")
         }
-        
-        updateTranscriptionPrompt()
     }
     
     private func createModelsDirectoryIfNeeded() {
         do {
             try FileManager.default.createDirectory(at: modelsDirectory, withIntermediateDirectories: true, attributes: nil)
-            print("📂 Models directory created/exists at: \(modelsDirectory.path)")
         } catch {
-            print("Error creating models directory: \(error.localizedDescription)")
+            messageLog += "Error creating models directory: \(error.localizedDescription)\n"
         }
     }
     
     private func createRecordingsDirectoryIfNeeded() {
         do {
             try FileManager.default.createDirectory(at: recordingsDirectory, withIntermediateDirectories: true, attributes: nil)
-            logger.info("📂 Recordings directory created/exists at: \(self.recordingsDirectory.path)")
         } catch {
-            logger.error("Error creating recordings directory: \(error.localizedDescription)")
+            messageLog += "Error creating recordings directory: \(error.localizedDescription)\n"
         }
     }
     
     private func loadAvailableModels() {
         do {
             let fileURLs = try FileManager.default.contentsOfDirectory(at: modelsDirectory, includingPropertiesForKeys: nil)
-            print("📂 Loading models from directory: \(modelsDirectory.path)")
-            print("📝 Found models: \(fileURLs.map { $0.lastPathComponent }.joined(separator: ", "))")
             availableModels = fileURLs.compactMap { url in
                 guard url.pathExtension == "bin" else { return nil }
                 return WhisperModel(name: url.deletingPathExtension().lastPathComponent, url: url)
             }
         } catch {
-            print("Error loading available models: \(error.localizedDescription)")
+            messageLog += "Error loading available models: \(error.localizedDescription)\n"
         }
     }
     
-    private func loadDictionaryItems() {
-        guard let data = UserDefaults.standard.data(forKey: saveKey) else { return }
-        
-        // Try loading with new format first
-        if let savedItems = try? JSONDecoder().decode([DictionaryItem].self, from: data) {
-            let enabledWords = savedItems.filter { $0.isEnabled }.map { $0.word }
-            dictionaryWords = enabledWords
-            updateTranscriptionPrompt()
-        }
-    }
-    
-    // Modify loadModel to be private and async
     private func loadModel(_ model: WhisperModel) async throws {
-        guard whisperContext == nil else { return } // Model already loaded
+        guard whisperContext == nil else { return }
         
         isModelLoading = true
         defer { isModelLoading = false }
         
-        messageLog += "Loading model...\n"
-        print("Attempting to load model from: \(model.url.path)")
         do {
             whisperContext = try await WhisperContext.createContext(path: model.url.path)
             isModelLoaded = true
             currentModel = model
-            print("Model loaded: \(model.name)")
-            messageLog += "Loaded model \(model.name)\n"
         } catch {
-            print("Error loading model: \(error.localizedDescription)")
             throw WhisperStateError.modelLoadFailed
         }
     }
@@ -232,80 +139,56 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             currentModel = model
             UserDefaults.standard.set(model.name, forKey: "CurrentModel")
             canTranscribe = true
-            print("Model set: \(model.name)")
         } catch {
             currentError = error as? WhisperStateError ?? .unknownError
-            print("Error setting default model: \(error.localizedDescription)")
-            messageLog += "Error setting default model: \(error.localizedDescription)\n"
             canTranscribe = false
         }
     }
 
     func toggleRecord() async {
         if isRecording {
-            logger.info("Stopping recording")
             await recorder.stopRecording()
             isRecording = false
             isVisualizerActive = false
             audioEngine.stopAudioEngine()
             if let recordedFile {
                 let duration = Date().timeIntervalSince(transcriptionStartTime ?? Date())
-                logger.info("Recording stopped, duration: \(duration)s")
                 await transcribeAudio(recordedFile, duration: duration)
-            } else {
-                logger.warning("No recorded file found after stopping recording")
             }
         } else {
-            logger.info("Starting recording process")
             requestRecordPermission { [self] granted in
                 if granted {
-                    logger.info("Recording permission granted")
                     Task {
                         do {
-                            // Create output file first
                             let file = try FileManager.default.url(for: .documentDirectory,
                                 in: .userDomainMask,
                                 appropriateFor: nil,
                                 create: true)
                                 .appending(path: "output.wav")
-                            self.logger.info("Created output file at: \(file.path)")
                             
-                            // Only start the audio engine if it's not already running
-                            // (it might have been started in parallel by handleToggleMiniRecorder)
                             if !self.audioEngine.isRunning {
-                                self.logger.info("Starting audio engine")
                                 self.audioEngine.startAudioEngine()
-                            } else {
-                                self.logger.info("Audio engine already running")
                             }
                             
-                            self.logger.info("Initializing recorder")
                             try await self.recorder.startRecording(toOutputFile: file, delegate: self)
                             
-                            self.logger.info("Recording started successfully")
                             self.isRecording = true
                             self.isVisualizerActive = true
                             self.recordedFile = file
                             self.transcriptionStartTime = Date()
                             
-                            // Handle tasks sequentially
-                            // Step 1: Apply power mode configuration
                             await ActiveWindowService.shared.applyConfigurationForCurrentApp()
                             
-                            // Step 2: Load model if needed
                             if let currentModel = self.currentModel, self.whisperContext == nil {
                                 do {
                                     try await self.loadModel(currentModel)
                                 } catch {
                                     await MainActor.run {
-                                        print("Error preloading model: \(error.localizedDescription)")
                                         self.messageLog += "Error preloading model: \(error.localizedDescription)\n"
                                     }
                                 }
                             }
                         } catch {
-                            self.logger.error("Failed to start recording: \(error.localizedDescription)")
-                            print(error.localizedDescription)
                             self.messageLog += "\(error.localizedDescription)\n"
                             self.isRecording = false
                             self.isVisualizerActive = false
@@ -313,7 +196,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                         }
                     }
                 } else {
-                    self.logger.error("Recording permission denied")
                     self.messageLog += "Recording permission denied\n"
                 }
             }
@@ -341,8 +223,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     }
     
     private func handleRecError(_ error: Error) {
-        logger.error("Recording error occurred: \(error.localizedDescription)")
-        print(error.localizedDescription)
         messageLog += "\(error.localizedDescription)\n"
         isRecording = false
     }
@@ -354,23 +234,13 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     }
     
     private func onDidFinishRecording(success: Bool) {
-        if success {
-            logger.info("Recording finished successfully")
-        } else {
-            logger.error("Recording finished unsuccessfully")
-        }
         isRecording = false
     }
     
     @Published var downloadProgress: [String: Double] = [:]
 
     func downloadModel(_ model: PredefinedModel) async {
-        guard let url = URL(string: model.downloadURL) else {
-            print("Invalid URL for model: \(model.name)")
-            return
-        }
-
-        print("Starting download for model: \(model.name)")
+        guard let url = URL(string: model.downloadURL) else { return }
 
         do {
             let (data, response) = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<(Data, URLResponse), Error>) in
@@ -390,21 +260,17 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 
                 task.resume()
                 
-                // Set up progress observation
                 let observation = task.progress.observe(\.fractionCompleted) { progress, _ in
                     DispatchQueue.main.async {
                         self.downloadProgress[model.name] = progress.fractionCompleted
                     }
                 }
                 
-                // Store the observation to keep it alive
                 Task {
                     await withTaskCancellationHandler {
                         observation.invalidate()
                     } operation: {
-                        await withCheckedContinuation { (_: CheckedContinuation<Void, Never>) in
-                            // This continuation is immediately resumed by the TaskDelegate
-                        }
+                        await withCheckedContinuation { (_: CheckedContinuation<Void, Never>) in }
                     }
                 }
             }
@@ -413,22 +279,15 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             try data.write(to: destinationURL)
 
             availableModels.append(WhisperModel(name: model.name, url: destinationURL))
-            print("Download completed for model: \(model.name)")
-            
-            // Remove the progress entry when download is complete
             self.downloadProgress.removeValue(forKey: model.name)
         } catch {
-            print("Error downloading model \(model.name): \(error.localizedDescription)")
             currentError = .modelDownloadFailed
             self.downloadProgress.removeValue(forKey: model.name)
         }
     }
 
-    // Update transcribeAudio to use the preloaded model
     private func transcribeAudio(_ url: URL, duration: TimeInterval) async {
-        if shouldCancelRecording {
-            return
-        }
+        if shouldCancelRecording { return }
 
         guard let currentModel = currentModel else {
             messageLog += "Cannot transcribe: No model selected.\n"
@@ -447,11 +306,9 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             isTranscribing = true
             canTranscribe = false
 
-            // Save the recording permanently first
             let permanentURL = try saveRecordingPermanently(url)
             let permanentURLString = permanentURL.absoluteString
 
-            // Check cancellation after setting processing state
             if shouldCancelRecording {
                 await cleanupResources()
                 return
@@ -460,19 +317,15 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             messageLog += "Reading wave samples...\n"
             let data = try readAudioSamples(url)
             
-            // Check cancellation after reading samples
             if shouldCancelRecording {
                 await cleanupResources()
                 return
             }
             
             messageLog += "Transcribing data using \(currentModel.name) model...\n"
+            messageLog += "Setting prompt: \(whisperPrompt.transcriptionPrompt)\n"
+            await whisperContext.setPrompt(whisperPrompt.transcriptionPrompt)
             
-            // Set prompt before transcription
-            messageLog += "Setting prompt: \(transcriptionPrompt)\n"
-            await whisperContext.setPrompt(transcriptionPrompt)
-            
-            // Check cancellation before starting transcription
             if shouldCancelRecording {
                 await cleanupResources()
                 return
@@ -480,7 +333,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             
             await whisperContext.fullTranscribe(samples: data)
             
-            // Check cancellation after transcription but before enhancement
             if shouldCancelRecording {
                 await cleanupResources()
                 return
@@ -489,12 +341,10 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             var text = await whisperContext.getTranscription()
             text = text.trimmingCharacters(in: .whitespacesAndNewlines)
             
-            // Try to enhance the transcription if the service is available and enabled
             if let enhancementService = enhancementService,
                enhancementService.isEnhancementEnabled,
                enhancementService.isConfigured {
                 do {
-                    // Check cancellation before enhancement
                     if shouldCancelRecording {
                         await cleanupResources()
                         return
@@ -504,7 +354,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                     let enhancedText = try await enhancementService.enhance(text)
                     messageLog += "Enhancement completed.\n"
                     
-                    // Create transcription with both original and enhanced text, plus audio URL
                     let newTranscription = Transcription(
                         text: text,
                         duration: duration,
@@ -514,11 +363,9 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                     modelContext.insert(newTranscription)
                     try? modelContext.save()
                     
-                    // Use enhanced text for clipboard and pasting
                     text = enhancedText
                 } catch {
                     messageLog += "Enhancement failed: \(error.localizedDescription). Using original transcription.\n"
-                    // Create transcription with only original text if enhancement fails
                     let newTranscription = Transcription(
                         text: text,
                         duration: duration,
@@ -528,7 +375,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                     try? modelContext.save()
                 }
             } else {
-                // Create transcription with only original text if enhancement is not enabled
                 let newTranscription = Transcription(
                     text: text,
                     duration: duration,
@@ -538,7 +384,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 try? modelContext.save()
             }
             
-            // Add upgrade message if trial has expired
             if case .trialExpired = licenseViewModel.licenseState {
                 text = """
                     Your trial has expired. Upgrade to VoiceInk Pro at tryvoiceink.com/buy
@@ -549,12 +394,9 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             
             messageLog += "Done: \(text)\n"
             
-            // Play stop sound when transcription is complete
             SoundManager.shared.playStopSound()
             
-            // First try to paste if accessibility permissions are granted
             if AXIsProcessTrusted() {
-                // For notch recorder, paste right after animation starts (animation takes 0.3s)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     CursorPaster.pasteAtCursor(text)
                 }
@@ -562,7 +404,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 messageLog += "Accessibility permissions not granted. Transcription not pasted automatically.\n"
             }
             
-            // Then copy to clipboard if enabled (as a backup)
             if isAutoCopyEnabled {
                 let success = ClipboardManager.copyToClipboard(text)
                 if success {
@@ -574,18 +415,13 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             }
             
             await cleanupResources()
-            
-            // Don't set processing states to false here
-            // Let dismissMiniRecorder handle it
             await dismissMiniRecorder()
             
         } catch {
-            print(error.localizedDescription)
             messageLog += "\(error.localizedDescription)\n"
             currentError = .transcriptionFailed
             
             await cleanupResources()
-            // Even in error case, let dismissMiniRecorder handle the states
             await dismissMiniRecorder()
         }
     }
@@ -693,16 +529,13 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     }
 
     private func hideRecorderPanel() {
-        logger.info("Hiding recorder panel")
         audioEngine.stopAudioEngine()
         
         if isRecording {
-            logger.info("Recording still active, stopping before hiding")
             Task {
                 await toggleRecord()
             }
         }
-        logger.info("Recorder panel hidden")
     }
 
     func toggleMiniRecorder() async {
@@ -730,13 +563,9 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     }
 
     private func cleanupResources() async {
-        // Only cleanup temporary files, not the permanent recordings
         audioEngine.stopAudioEngine()
+        try? await Task.sleep(nanoseconds: 100_000_000)
         
-        // Add a small delay to allow audio system to complete its operations
-        try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms delay
-        
-        // Release whisper resources if not needed
         if !isRecording && !isProcessing {
             await whisperContext?.releaseResources()
             whisperContext = nil
@@ -745,29 +574,18 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     }
 
     func dismissMiniRecorder() async {
-        logger.info("Starting mini recorder dismissal")
-        // 1. Cancel any ongoing recording
         shouldCancelRecording = true
         if isRecording {
-            logger.info("Stopping active recording")
             await recorder.stopRecording()
         }
         
-        // 2. Start dismissal animation while keeping processing state
-        logger.info("Starting dismissal animation")
         if recorderType == "notch" {
             notchWindowManager?.hide()
         } else {
             miniWindowManager?.hide()
         }
         
-        // 3. No need to wait for animation since we removed it
-        // try? await Task.sleep(nanoseconds: 700_000_000)  // 0.7 seconds
-        
-        // 4. Clean up states immediately
         await MainActor.run {
-            logger.info("Cleaning up recorder states")
-            // Reset all states
             isRecording = false
             isVisualizerActive = false
             isProcessing = false
@@ -777,12 +595,8 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             shouldCancelRecording = false
         }
         
-        // 5. Finally clean up resources
-        logger.info("Cleaning up resources")
-        // Add a small delay before cleanup to prevent audio overload
-        try? await Task.sleep(nanoseconds: 150_000_000)  // 150ms delay
+        try? await Task.sleep(nanoseconds: 150_000_000)
         await cleanupResources()
-        logger.info("Mini recorder dismissal completed")
     }
 
     func cancelRecording() async {
@@ -796,14 +610,12 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
 
     @Published var currentError: WhisperStateError?
 
-    // Replace the existing unloadModel function with this one
     func unloadModel() {
         Task {
             await whisperContext?.releaseResources()
             whisperContext = nil
             isModelLoaded = false
             
-            // Additional cleanup
             audioEngine.stopAudioEngine()
             if let recordedFile = recordedFile {
                 try? FileManager.default.removeItem(at: recordedFile)
@@ -812,49 +624,17 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         }
     }
 
-    
-
-    // Optional: Method to clear downloaded models
     private func clearDownloadedModels() async {
         for model in availableModels {
             do {
                 try FileManager.default.removeItem(at: model.url)
             } catch {
-                print("Error deleting model file: \(error.localizedDescription)")
+                messageLog += "Error deleting model: \(error.localizedDescription)\n"
             }
         }
         availableModels.removeAll()
     }
 
-    // Keep only these essential prompt-related methods
-    func updateDictionaryWords(_ words: [String]) {
-        dictionaryWords = words
-        updateTranscriptionPrompt()
-    }
-    
-    private func updateTranscriptionPrompt() {
-        var prompt = basePrompt
-        
-        // Combine permanent words with user-added dictionary words
-        var allWords = ["VoiceInk"]  // Add VoiceInk as permanent word
-        allWords.append(contentsOf: dictionaryWords)
-        
-        if !allWords.isEmpty {
-            prompt += "\nImportant words: " + allWords.joined(separator: ", ")
-        }
-        
-        transcriptionPrompt = prompt
-        UserDefaults.standard.set(prompt, forKey: "TranscriptionPrompt")
-        
-        // Update whisper context if it exists
-        if let whisperContext = whisperContext {
-            Task {
-                await whisperContext.setPrompt(prompt)
-            }
-        }
-    }
-
-    // Public method to access enhancement service
     func getEnhancementService() -> AIEnhancementService? {
         return enhancementService
     }
@@ -862,20 +642,8 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     private func saveRecordingPermanently(_ tempURL: URL) throws -> URL {
         let fileName = "\(UUID().uuidString).wav"
         let permanentURL = recordingsDirectory.appendingPathComponent(fileName)
-        
         try FileManager.default.copyItem(at: tempURL, to: permanentURL)
-        logger.info("Saved recording permanently at: \(permanentURL.path)")
-        
         return permanentURL
-    }
-
-    func saveDictionaryItems(_ items: [DictionaryItem]) async {
-        if let encoded = try? JSONEncoder().encode(items) {
-            UserDefaults.standard.set(encoded, forKey: saveKey)
-            let enabledWords = items.filter { $0.isEnabled }.map { $0.word }
-            dictionaryWords = enabledWords
-            updateTranscriptionPrompt()
-        }
     }
 }
 
@@ -891,7 +659,6 @@ struct WhisperModel: Identifiable {
     }
 }
 
-// Helper class for task delegation
 private class TaskDelegate: NSObject, URLSessionTaskDelegate {
     private let continuation: CheckedContinuation<Void, Never>
     

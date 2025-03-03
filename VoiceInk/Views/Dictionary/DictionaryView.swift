@@ -17,10 +17,10 @@ struct DictionaryItem: Identifiable, Hashable, Codable {
 class DictionaryManager: ObservableObject {
     @Published var items: [DictionaryItem] = []
     private let saveKey = "CustomDictionaryItems"
-    @Published var whisperState: WhisperState
+    private let whisperPrompt: WhisperPrompt
     
-    init(whisperState: WhisperState) {
-        self.whisperState = whisperState
+    init(whisperPrompt: WhisperPrompt) {
+        self.whisperPrompt = whisperPrompt
         loadItems()
     }
     
@@ -29,19 +29,20 @@ class DictionaryManager: ObservableObject {
         
         if let savedItems = try? JSONDecoder().decode([DictionaryItem].self, from: data) {
             items = savedItems.sorted(by: { $0.dateAdded > $1.dateAdded })
-        }
-        
-        Task { @MainActor in
-            await whisperState.saveDictionaryItems(items)
+            updatePrompt()
         }
     }
     
     private func saveItems() {
         if let encoded = try? JSONEncoder().encode(items) {
             UserDefaults.standard.set(encoded, forKey: saveKey)
-            Task { @MainActor in
-                await whisperState.saveDictionaryItems(items)
-            }
+            updatePrompt()
+        }
+    }
+    
+    private func updatePrompt() {
+        Task { @MainActor in
+            await whisperPrompt.saveDictionaryItems(items)
         }
     }
     
@@ -75,13 +76,14 @@ class DictionaryManager: ObservableObject {
 
 struct DictionaryView: View {
     @StateObject private var dictionaryManager: DictionaryManager
-    @EnvironmentObject private var whisperState: WhisperState
+    @ObservedObject var whisperPrompt: WhisperPrompt
     @State private var newWord = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
     
-    init(whisperState: WhisperState) {
-        _dictionaryManager = StateObject(wrappedValue: DictionaryManager(whisperState: whisperState))
+    init(whisperPrompt: WhisperPrompt) {
+        self.whisperPrompt = whisperPrompt
+        _dictionaryManager = StateObject(wrappedValue: DictionaryManager(whisperPrompt: whisperPrompt))
     }
     
     var body: some View {
@@ -155,9 +157,6 @@ struct DictionaryView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(alertMessage)
-        }
-        .onAppear {
-            whisperState.updateDictionaryWords(dictionaryManager.allWords)
         }
     }
     
