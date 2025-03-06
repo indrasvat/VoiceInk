@@ -79,6 +79,10 @@ actor WhisperContext {
         params.offset_ms        = 0
         params.no_context       = true
         params.single_segment   = false
+        
+        // Adjusted parameters to reduce hallucination
+        params.suppress_blank   = true      // Keep suppressing blank outputs
+        params.suppress_nst     = true      // Additional suppression of non-speech tokens
 
         whisper_reset_timings(context)
         print("About to run whisper_full")
