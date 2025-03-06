@@ -57,7 +57,7 @@ struct LicenseManagementView: View {
                 if case .licensed = licenseViewModel.licenseState {
                     HStack(spacing: 40) {
                         Button {
-                            if let url = URL(string: "https://voiceink.featurebase.app/changelog") {
+                            if let url = URL(string: "https://github.com/Beingpax/VoiceInk/releases") {
                                 NSWorkspace.shared.open(url)
                             }
                         } label: {
@@ -84,7 +84,7 @@ struct LicenseManagementView: View {
                         .buttonStyle(.plain)
                         
                         Button {
-                            if let url = URL(string: "https://voiceink.featurebase.app") {
+                            if let url = URL(string: "https://github.com/Beingpax/VoiceInk/issues") {
                                 NSWorkspace.shared.open(url)
                             }
                         } label: {

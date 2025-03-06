@@ -386,14 +386,18 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             
             messageLog += "Done: \(text)\n"
             
-            SoundManager.shared.playStopSound()
-            
-            if AXIsProcessTrusted() {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    CursorPaster.pasteAtCursor(text)
+            if !shouldCancelRecording {
+                SoundManager.shared.playStopSound()
+                
+                if AXIsProcessTrusted() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        if !self.shouldCancelRecording {
+                            CursorPaster.pasteAtCursor(text)
+                        }
+                    }
+                } else {
+                    messageLog += "Accessibility permissions not granted. Transcription not pasted automatically.\n"
                 }
-            } else {
-                messageLog += "Accessibility permissions not granted. Transcription not pasted automatically.\n"
             }
             
             if isAutoCopyEnabled {
@@ -557,11 +561,15 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             isTranscribing = false
             canTranscribe = true
             isMiniRecorderVisible = false
-            shouldCancelRecording = false
         }
         
         try? await Task.sleep(nanoseconds: 150_000_000)
         await cleanupResources()
+        
+        // Reset cancellation flag only after all cleanup is done
+        await MainActor.run {
+            shouldCancelRecording = false
+        }
     }
 
     func cancelRecording() async {
