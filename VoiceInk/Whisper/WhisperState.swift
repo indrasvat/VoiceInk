@@ -172,6 +172,13 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                             
                             await ActiveWindowService.shared.applyConfigurationForCurrentApp()
                             
+                            // Trigger screen capture if enhancement and screen capture are enabled
+                            if let enhancementService = self.enhancementService,
+                               enhancementService.isEnhancementEnabled && 
+                               enhancementService.useScreenCaptureContext {
+                                await enhancementService.captureScreenContext()
+                            }
+                            
                             if let currentModel = self.currentModel, self.whisperContext == nil {
                                 do {
                                     try await self.loadModel(currentModel)
