@@ -3,21 +3,21 @@
     <channel>
         <title>VoiceInk Releases</title>
         <item>
-            <title>0.99</title>
-            <pubDate>Thu, 3 Mar 2025 07:51:55 +0545</pubDate>
+            <title>1.0</title>
+            <pubDate>Thu, 7 Mar 2025 07:51:55 +0545</pubDate>
             <sparkle:version>99</sparkle:version>
-            <sparkle:shortVersionString>0.99</sparkle:shortVersionString>
+            <sparkle:shortVersionString>1.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
-                    <h3>What's New in Version 0.99 🚀⚡</h3>
+                    <h3>What's New in Version 1.0 🚀⚡</h3>
                         <ul>
-                            <li>Fixed hallucinations during silent audio(not completely, but improved a lot)</li>
-                            <li>Fixed Apps from subfolders not showing up on Power Mode</li>
+                            <li>Added proper debugging in crucial places</li>
+                            <li>Added more menubar options</li>
                             <li>Added Debug for AI Enhancement & Screen Capture</li>
                             <li>Minor Improvements & bug fixes</li>
                         </ul>
             ]]></description>
-            <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v0.99/VoiceInk.dmg" length="5709259" type="application/octet-stream" sparkle:edSignature="A6nMnJf9/3iAbmPBHg5MOMXIQh9zA8u0d4sVJ1wbsIEDyHl7Gmp52v/xvaax27zjR1x7O7/DgFV5d3+YXVBUCQ=="/>
+            <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v0.92/VoiceInk.dmg" length="5720052" type="application/octet-stream" sparkle:edSignature="4Jb+SrdUQPtL2metqvMQOOE9BJvhLjpMAApG4r6t3gJxSlZEwFob0QXI2TD2BEPn41DyoTdZ892KgpZB3s3ODw=="/>
         </item>
     </channel>
 </rss>
