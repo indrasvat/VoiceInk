@@ -92,6 +92,20 @@ struct MenuBarView: View {
             Toggle("Use Screen Context", isOn: $enhancementService.useScreenCaptureContext)
                 .disabled(!enhancementService.isEnhancementEnabled)
             
+            Menu("Additional") {
+                Toggle("Auto-copy to Clipboard", isOn: $whisperState.isAutoCopyEnabled)
+                
+                Toggle("Sound Feedback", isOn: .init(
+                    get: { SoundManager.shared.isEnabled },
+                    set: { SoundManager.shared.isEnabled = $0 }
+                ))
+                
+                Toggle("Pause Media During Recording", isOn: .init(
+                    get: { MediaController.shared.isMediaPauseEnabled },
+                    set: { MediaController.shared.isMediaPauseEnabled = $0 }
+                ))
+            }
+            
             Divider()
             
             Button("History") {
