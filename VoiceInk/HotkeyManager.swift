@@ -31,6 +31,7 @@ class HotkeyManager: ObservableObject {
                 isFnKeyPressed = false
                 isRightCommandKeyPressed = false
                 isRightShiftKeyPressed = false
+                keyPressStartTime = nil
             }
             setupKeyMonitors()
         }
@@ -42,6 +43,7 @@ class HotkeyManager: ObservableObject {
             isFnKeyPressed = false
             isRightCommandKeyPressed = false
             isRightShiftKeyPressed = false
+            keyPressStartTime = nil
         }
     }
     
@@ -53,6 +55,8 @@ class HotkeyManager: ObservableObject {
     private var localKeyMonitor: Any?
     private var globalKeyMonitor: Any?
     private var visibilityTask: Task<Void, Never>?
+    private var keyPressStartTime: Date?
+    private let shortPressDuration: TimeInterval = 0.5 // 300ms threshold
     
     // Add cooldown management
     private var lastShortcutTriggerTime: Date?
@@ -293,9 +297,26 @@ class HotkeyManager: ObservableObject {
             isRightShiftKeyPressed = keyState
         }
         
-        // Toggle recording based on key state
-        if whisperState.isMiniRecorderVisible != keyState {
-            await whisperState.handleToggleMiniRecorder()
+        if keyState {
+            // Key pressed down - start recording and store timestamp
+            if !whisperState.isMiniRecorderVisible {
+                keyPressStartTime = Date()
+                await whisperState.handleToggleMiniRecorder()
+            }
+        } else {
+            // Key released
+            if whisperState.isMiniRecorderVisible {
+                // Check if the key was pressed for less than the threshold
+                if let startTime = keyPressStartTime,
+                   Date().timeIntervalSince(startTime) < shortPressDuration {
+                    // Short press - don't stop recording
+                    keyPressStartTime = nil
+                    return
+                }
+                // Long press - stop recording
+                await whisperState.handleToggleMiniRecorder()
+            }
+            keyPressStartTime = nil
         }
     }
     
