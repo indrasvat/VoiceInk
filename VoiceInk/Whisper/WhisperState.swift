@@ -66,10 +66,13 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     private var transcriptionStartTime: Date?
     private var notchWindowManager: NotchWindowManager?
     private var miniWindowManager: MiniWindowManager?
+    private let modelMigration = WhisperModelMigration()
     
     init(modelContext: ModelContext, enhancementService: AIEnhancementService? = nil) {
         self.modelContext = modelContext
-        self.modelsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("WhisperModels")
+        self.modelsDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("com.prakashjoshipax.VoiceInk")
+            .appendingPathComponent("WhisperModels")
         self.recordingsDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("com.prakashjoshipax.VoiceInk")
             .appendingPathComponent("Recordings")
@@ -86,6 +89,30 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         if let savedModelName = UserDefaults.standard.string(forKey: "CurrentModel"),
            let savedModel = availableModels.first(where: { $0.name == savedModelName }) {
             currentModel = savedModel
+        }
+        
+        Task {
+            await migrateModelsIfNeeded()
+        }
+    }
+    
+    private func migrateModelsIfNeeded() async {
+        if modelMigration.isMigrationNeeded {
+            logger.info("Starting model migration from Documents to Application Support")
+            let (success, migratedModels) = await modelMigration.migrateModels()
+            
+            if success && !migratedModels.isEmpty {
+                logger.info("Successfully migrated \(migratedModels.count) models")
+                await MainActor.run {
+                    loadAvailableModels()
+                    
+                    if currentModel == nil, let firstModel = availableModels.first {
+                        Task {
+                            await setDefaultModel(firstModel)
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -172,7 +199,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                             
                             await ActiveWindowService.shared.applyConfigurationForCurrentApp()
                             
-                            // Trigger screen capture if enhancement and screen capture are enabled
                             if let enhancementService = self.enhancementService,
                                enhancementService.isEnhancementEnabled && 
                                enhancementService.useScreenCaptureContext {
@@ -473,17 +499,13 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     
     @objc public func handleToggleMiniRecorder() {
         if isMiniRecorderVisible {
-            // If the recorder is visible, toggle recording
             Task {
                 await toggleRecord()
             }
         } else {
-            // Start recording first, then show UI
             Task {
-                // Start recording immediately
                 await toggleRecord()
                 
-                // Play sound and show UI after recording has started
                 SoundManager.shared.playStartSound()
                 
                 await MainActor.run {
@@ -524,15 +546,15 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         if isMiniRecorderVisible {
             await dismissMiniRecorder()
         } else {
-            // Start recording first
-            await toggleRecord()
-            
-            // Play sound and show UI after recording has started
-            SoundManager.shared.playStartSound()
-            
-            await MainActor.run {
-                showRecorderPanel()
-                isMiniRecorderVisible = true
+            Task {
+                await toggleRecord()
+                
+                SoundManager.shared.playStartSound()
+                
+                await MainActor.run {
+                    showRecorderPanel()
+                    isMiniRecorderVisible = true
+                }
             }
         }
     }
