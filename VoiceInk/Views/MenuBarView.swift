@@ -9,6 +9,7 @@ struct MenuBarView: View {
     @EnvironmentObject var enhancementService: AIEnhancementService
     @EnvironmentObject var aiService: AIService
     @State private var launchAtLoginEnabled = LaunchAtLogin.isEnabled
+    @State private var menuRefreshTrigger = false  // Added to force menu updates
     
     var body: some View {
         VStack {
@@ -93,18 +94,45 @@ struct MenuBarView: View {
                 .disabled(!enhancementService.isEnhancementEnabled)
             
             Menu("Additional") {
-                Toggle("Auto-copy to Clipboard", isOn: $whisperState.isAutoCopyEnabled)
+                Button {
+                    whisperState.isAutoCopyEnabled.toggle()
+                } label: {
+                    HStack {
+                        Text("Auto-copy to Clipboard")
+                        Spacer()
+                        if whisperState.isAutoCopyEnabled {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
                 
-                Toggle("Sound Feedback", isOn: .init(
-                    get: { SoundManager.shared.isEnabled },
-                    set: { SoundManager.shared.isEnabled = $0 }
-                ))
+                Button {
+                    SoundManager.shared.isEnabled.toggle()
+                    menuRefreshTrigger.toggle()
+                } label: {
+                    HStack {
+                        Text("Sound Feedback")
+                        Spacer()
+                        if SoundManager.shared.isEnabled {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
                 
-                Toggle("Pause Media During Recording", isOn: .init(
-                    get: { MediaController.shared.isMediaPauseEnabled },
-                    set: { MediaController.shared.isMediaPauseEnabled = $0 }
-                ))
+                Button {
+                    MediaController.shared.isMediaPauseEnabled.toggle()
+                    menuRefreshTrigger.toggle()
+                } label: {
+                    HStack {
+                        Text("Pause Media During Recording")
+                        Spacer()
+                        if MediaController.shared.isMediaPauseEnabled {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
             }
+            .id("additional-menu-\(menuRefreshTrigger)")
             
             Divider()
             
