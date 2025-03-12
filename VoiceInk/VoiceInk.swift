@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import Sparkle
 import AppKit
+import OSLog
 
 @main
 struct VoiceInkApp: App {
@@ -16,6 +17,9 @@ struct VoiceInkApp: App {
     @StateObject private var enhancementService: AIEnhancementService
     @StateObject private var activeWindowService = ActiveWindowService.shared
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    
+    // Audio cleanup manager for automatic deletion of old audio files
+    private let audioCleanupManager = AudioCleanupManager.shared
     
     init() {
         do {
@@ -90,12 +94,18 @@ struct VoiceInkApp: App {
                     .modelContainer(container)
                     .onAppear {
                         updaterViewModel.silentlyCheckForUpdates()
+                        
+                        // Start the automatic audio cleanup process
+                        audioCleanupManager.startAutomaticCleanup(modelContext: container.mainContext)
                     }
                     .background(WindowAccessor { window in
                         WindowManager.shared.configureWindow(window)
                     })
                     .onDisappear {
                         whisperState.unloadModel()
+                        
+                        // Stop the automatic audio cleanup process
+                        audioCleanupManager.stopAutomaticCleanup()
                     }
             } else {
                 OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)

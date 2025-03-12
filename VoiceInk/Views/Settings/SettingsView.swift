@@ -3,6 +3,7 @@ import Cocoa
 import KeyboardShortcuts
 import LaunchAtLogin
 import AVFoundation
+// Additional imports for Settings components
 
 struct SettingsView: View {
     @EnvironmentObject private var updaterViewModel: UpdaterViewModel
@@ -163,6 +164,15 @@ struct SettingsView: View {
                         .pickerStyle(.radioGroup)
                         .padding(.vertical, 4)
                     }
+                }
+                
+                // Audio Cleanup Section
+                SettingsSection(
+                    icon: "trash.circle",
+                    title: "Audio Cleanup",
+                    subtitle: "Manage recording storage"
+                ) {
+                    AudioCleanupSettingsView()
                 }
                 
                 // Reset Onboarding Section
