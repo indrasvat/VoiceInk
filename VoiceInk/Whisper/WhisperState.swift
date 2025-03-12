@@ -197,23 +197,10 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                             self.recordedFile = file
                             self.transcriptionStartTime = Date()
                             
-                            await ActiveWindowService.shared.applyConfigurationForCurrentApp()
-                            
-                            if let enhancementService = self.enhancementService,
-                               enhancementService.isEnhancementEnabled && 
-                               enhancementService.useScreenCaptureContext {
-                                await enhancementService.captureScreenContext()
+                            Task.detached(priority: .background) {
+                                await self.performBackgroundTasks()
                             }
                             
-                            if let currentModel = self.currentModel, self.whisperContext == nil {
-                                do {
-                                    try await self.loadModel(currentModel)
-                                } catch {
-                                    await MainActor.run {
-                                        self.messageLog += "Error preloading model: \(error.localizedDescription)\n"
-                                    }
-                                }
-                            }
                         } catch {
                             self.messageLog += "\(error.localizedDescription)\n"
                             self.isRecording = false
@@ -224,6 +211,26 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                     self.messageLog += "Recording permission denied\n"
                 }
             }
+        }
+    }
+    
+    private func performBackgroundTasks() async {
+        if let currentModel = self.currentModel, self.whisperContext == nil {
+            do {
+                try await self.loadModel(currentModel)
+            } catch {
+                await MainActor.run {
+                    self.messageLog += "Error preloading model: \(error.localizedDescription)\n"
+                }
+            }
+        }
+        
+        await ActiveWindowService.shared.applyConfigurationForCurrentApp()
+        
+        if let enhancementService = self.enhancementService,
+           enhancementService.isEnhancementEnabled && 
+           enhancementService.useScreenCaptureContext {
+            await enhancementService.captureScreenContext()
         }
     }
     
