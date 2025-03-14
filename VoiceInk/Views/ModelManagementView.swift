@@ -51,7 +51,7 @@ struct ModelManagementView: View {
     }
     
     private var languageSelectionSection: some View {
-        LanguageSelectionView(whisperState: whisperState)
+        LanguageSelectionView(whisperState: whisperState, displayMode: .full)
     }
     
     private var availableModelsSection: some View {

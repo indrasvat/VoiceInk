@@ -1,8 +1,16 @@
 import SwiftUI
 
+// Define a display mode for flexible usage
+enum LanguageDisplayMode {
+    case full      // For settings page with descriptions
+    case menuItem  // For menu bar with compact layout
+}
+
 struct LanguageSelectionView: View {
     @ObservedObject var whisperState: WhisperState
-    @State private var selectedLanguage: String = UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "en"
+    @AppStorage("SelectedLanguage") private var selectedLanguage: String = "en"
+    // Add display mode parameter with full as the default
+    var displayMode: LanguageDisplayMode = .full
     
     let languages = [
         "auto": "Auto-detect",
@@ -109,14 +117,35 @@ struct LanguageSelectionView: View {
     ]
     
     private func updateLanguage(_ language: String) {
-        // Update UI state
+        // Update UI state - the UserDefaults updating is now automatic with @AppStorage
         selectedLanguage = language
-        
-        // Persist selection
-        UserDefaults.standard.set(language, forKey: "SelectedLanguage")
+    }
+    
+    // Function to check if current model is multilingual
+    private func isMultilingualModel() -> Bool {
+        guard let currentModel = whisperState.currentModel,
+               let predefinedModel = PredefinedModels.models.first(where: { $0.name == currentModel.name }) else {
+            return false
+        }
+        return predefinedModel.language == "Multilingual"
+    }
+    
+    // Get the display name of the current language
+    private func currentLanguageDisplayName() -> String {
+        return languages[selectedLanguage] ?? "Unknown"
     }
     
     var body: some View {
+        switch displayMode {
+        case .full:
+            fullView
+        case .menuItem:
+            menuItemView
+        }
+    }
+    
+    // The original full view layout for settings page
+    private var fullView: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Transcription Language")
                 .font(.headline)
@@ -174,5 +203,46 @@ struct LanguageSelectionView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(10)
+    }
+    
+    // New compact view for menu bar
+    private var menuItemView: some View {
+        Group {
+            if isMultilingualModel() {
+                Menu {
+                    ForEach(languages.sorted(by: { $0.value < $1.value }), id: \.key) { key, value in
+                        Button {
+                            updateLanguage(key)
+                        } label: {
+                            HStack {
+                                Text(value)
+                                if selectedLanguage == key {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Text("Language: \(currentLanguageDisplayName())")
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 10))
+                    }
+                }
+            } else {
+                // For English-only models
+                Button {
+                    // Do nothing, just showing info
+                } label: {
+                    Text("Language: English (only)")
+                        .foregroundColor(.secondary)
+                }
+                .disabled(true)
+                .onAppear {
+                    // Ensure English is set for English-only models
+                    updateLanguage("en")
+                }
+            }
+        }
     }
 }

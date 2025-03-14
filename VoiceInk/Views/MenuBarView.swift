@@ -87,6 +87,8 @@ struct MenuBarView: View {
                 }
             }
             
+            LanguageSelectionView(whisperState: whisperState, displayMode: .menuItem)
+            
             Toggle("Use Clipboard Context", isOn: $enhancementService.useClipboardContext)
                 .disabled(!enhancementService.isEnhancementEnabled)
             
