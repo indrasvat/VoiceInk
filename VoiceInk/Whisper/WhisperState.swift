@@ -339,9 +339,22 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             return
         }
 
+        if whisperContext == nil {
+            logger.notice("🔄 Model not loaded yet, attempting to load now: \(currentModel.name)")
+            do {
+                try await loadModel(currentModel)
+            } catch {
+                logger.error("❌ Failed to load model: \(currentModel.name) - \(error.localizedDescription)")
+                messageLog += "Failed to load transcription model. Please try again.\n"
+                currentError = .modelLoadFailed
+                await cleanupResources()
+                return
+            }
+        }
+
         guard let whisperContext = whisperContext else {
-            logger.error("❌ Cannot transcribe: Model not loaded")
-            messageLog += "Cannot transcribe: Model not loaded.\n"
+            logger.error("❌ Cannot transcribe: Model could not be loaded")
+            messageLog += "Cannot transcribe: Model could not be loaded after retry.\n"
             currentError = .modelLoadFailed
             return
         }
@@ -538,7 +551,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     }
 
     private func showRecorderPanel() {
-        logger.notice("📱 Showing \(recorderType) recorder")
+        logger.notice("📱 Showing \(self.recorderType) recorder")
         if recorderType == "notch" {
             if notchWindowManager == nil {
                 notchWindowManager = NotchWindowManager(whisperState: self, recorder: recorder)
@@ -589,7 +602,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     }
 
     func dismissMiniRecorder() async {
-        logger.notice("📱 Dismissing \(recorderType) recorder")
+        logger.notice("📱 Dismissing \(self.recorderType) recorder")
         shouldCancelRecording = true
         if isRecording {
             await recorder.stopRecording()
