@@ -18,7 +18,7 @@ struct TranscriptionHistoryView: View {
     private let pageSize = 20
     
     // Query for latest transcriptions (used for real-time updates)
-    @Query(sort: \Transcription.timestamp, order: .reverse, animation: .default) 
+    @Query(sort: \Transcription.timestamp, order: .reverse) 
     private var latestTranscriptions: [Transcription]
     
     // Cursor-based query descriptor
@@ -69,13 +69,7 @@ struct TranscriptionHistoryView: View {
                                 onToggleSelection: { toggleSelection(transcription) }
                             )
                             .onTapGesture {
-                                withAnimation {
-                                    if expandedTranscription == transcription {
-                                        expandedTranscription = nil
-                                    } else {
-                                        expandedTranscription = transcription
-                                    }
-                                }
+                                expandedTranscription = expandedTranscription == transcription ? nil : transcription
                             }
                         }
                         
@@ -140,14 +134,10 @@ struct TranscriptionHistoryView: View {
                         await loadInitialContent()
                     }
                 } else {
-                    // If we're on a paginated view, show a notification or indicator that new content is available
-                    // This could be a banner or button to "Show new transcriptions"
-                    withAnimation {
-                        // Reset pagination to show the latest content
-                        Task {
-                            await resetPagination()
-                            await loadInitialContent()
-                        }
+                    // Reset pagination to show the latest content
+                    Task {
+                        await resetPagination()
+                        await loadInitialContent()
                     }
                 }
             }
@@ -186,14 +176,22 @@ struct TranscriptionHistoryView: View {
     }
     
     private var selectionToolbar: some View {
-        HStack {
+        HStack(spacing: 12) {
+            Text("\(selectedTranscriptions.count) selected")
+                .foregroundColor(.secondary)
+                .font(.system(size: 14))
+            
             Spacer()
+            
             Button(action: {
                 showDeleteConfirmation = true
             }) {
-                Image(systemName: "trash")
+                HStack(spacing: 4) {
+                    Image(systemName: "trash")
+                    Text("Delete")
+                }
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.borderless)
             
             if selectedTranscriptions.count < displayedTranscriptions.count {
                 Button("Select All") {
@@ -201,16 +199,16 @@ struct TranscriptionHistoryView: View {
                         await selectAllTranscriptions()
                     }
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderless)
             } else {
                 Button("Deselect All") {
                     selectedTranscriptions.removeAll()
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderless)
             }
         }
-        .padding(24)
-        .background(Color(.windowBackgroundColor).opacity(0.4))
+        .padding(16)
+        .background(Color(.windowBackgroundColor))
     }
     
     private func loadInitialContent() async {
@@ -375,198 +373,5 @@ struct CircularCheckboxStyle: ToggleStyle {
                 .font(.system(size: 18))
         }
         .buttonStyle(.plain)
-    }
-}
-
-struct TranscriptionCard: View {
-    let transcription: Transcription
-    let isExpanded: Bool
-    let isSelected: Bool
-    let onDelete: () -> Void
-    let onToggleSelection: () -> Void
-    @State private var showOriginalCopiedAlert = false
-    @State private var showEnhancedCopiedAlert = false
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            // Selection checkbox in macOS style
-            Toggle("", isOn: Binding(
-                get: { isSelected },
-                set: { _ in onToggleSelection() }
-            ))
-            .toggleStyle(CircularCheckboxStyle())
-            .labelsHidden()
-            
-            VStack(alignment: .leading, spacing: 8) {
-                // Header with date and duration
-                HStack {
-                    Text(transcription.timestamp, style: .date)
-                        .font(.system(size: 14, weight: .medium, design: .default))
-                        .foregroundColor(.secondary)
-                    Spacer()
-                    
-                    Text(formatDuration(transcription.duration))
-                        .font(.system(size: 14, weight: .medium, design: .default))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.1))
-                        .foregroundColor(.blue)
-                        .cornerRadius(6)
-                }
-                
-                // Original text section
-                VStack(alignment: .leading, spacing: 8) {
-                    if isExpanded {
-                        HStack {
-                            Text("Original")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Button {
-                                copyToClipboard(transcription.text)
-                                showOriginalCopiedAlert = true
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Image(systemName: showOriginalCopiedAlert ? "checkmark" : "doc.on.doc")
-                                    Text(showOriginalCopiedAlert ? "Copied!" : "Copy")
-                                }
-                                .foregroundColor(showOriginalCopiedAlert ? .green : .blue)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .fill(showOriginalCopiedAlert ? Color.green.opacity(0.1) : Color.blue.opacity(0.1))
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .animation(.easeInOut(duration: 0.2), value: showOriginalCopiedAlert)
-                        }
-                    }
-                    
-                    Text(transcription.text)
-                        .font(.system(size: 15, weight: .regular, design: .default))
-                        .lineLimit(isExpanded ? nil : 2)
-                        .lineSpacing(2)
-                }
-                
-                // Enhanced text section (only when expanded)
-                if isExpanded, let enhancedText = transcription.enhancedText {
-                    Divider()
-                        .padding(.vertical, 8)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            HStack(spacing: 4) {
-                                Image(systemName: "sparkles")
-                                    .foregroundColor(.blue)
-                                Text("Enhanced")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.blue)
-                            }
-                            Spacer()
-                            Button {
-                                copyToClipboard(enhancedText)
-                                showEnhancedCopiedAlert = true
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Image(systemName: showEnhancedCopiedAlert ? "checkmark" : "doc.on.doc")
-                                    Text(showEnhancedCopiedAlert ? "Copied!" : "Copy")
-                                }
-                                .foregroundColor(showEnhancedCopiedAlert ? .green : .blue)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .fill(showEnhancedCopiedAlert ? Color.green.opacity(0.1) : Color.blue.opacity(0.1))
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .animation(.easeInOut(duration: 0.2), value: showEnhancedCopiedAlert)
-                        }
-                        
-                        Text(enhancedText)
-                            .font(.system(size: 15, weight: .regular, design: .default))
-                            .lineSpacing(2)
-                    }
-                }
-                
-                // Audio player (if available)
-                if isExpanded, let urlString = transcription.audioFileURL,
-                   let url = URL(string: urlString),
-                   FileManager.default.fileExists(atPath: url.path) {
-                    Divider()
-                        .padding(.vertical, 8)
-                    AudioPlayerView(url: url)
-                }
-                
-                // Timestamp (only when expanded)
-                if isExpanded {
-                    HStack {
-                        Text(transcription.timestamp, style: .time)
-                            .font(.system(size: 14, weight: .regular, design: .default))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
-                    .padding(.top, 4)
-                }
-            }
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.windowBackgroundColor).opacity(0.4))
-        )
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
-        .contextMenu {
-            if let enhancedText = transcription.enhancedText {
-                Button {
-                    copyToClipboard(enhancedText)
-                    showEnhancedCopiedAlert = true
-                } label: {
-                    Label("Copy Enhanced", systemImage: "doc.on.doc")
-                }
-            }
-            
-            Button {
-                copyToClipboard(transcription.text)
-                showOriginalCopiedAlert = true
-            } label: {
-                Label("Copy Original", systemImage: "doc.on.doc")
-            }
-            
-            Button(role: .destructive) {
-                onDelete()
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
-        .onChange(of: showOriginalCopiedAlert) { _, isShowing in
-            if isShowing {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    showOriginalCopiedAlert = false
-                }
-            }
-        }
-        .onChange(of: showEnhancedCopiedAlert) { _, isShowing in
-            if isShowing {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    showEnhancedCopiedAlert = false
-                }
-            }
-        }
-    }
-    
-    private func copyToClipboard(_ text: String) {
-        let success = ClipboardManager.copyToClipboard(text)
-        if !success {
-            print("Failed to copy text to clipboard")
-        }
-    }
-    
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let minutes = Int(duration) / 60
-        let seconds = Int(duration) % 60
-        return String(format: "%d:%02d", minutes, seconds)
     }
 }
