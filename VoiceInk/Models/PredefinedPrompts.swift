@@ -20,37 +20,58 @@ enum PredefinedPrompts {
                 title: "Default",
                 promptText: """
                 Primary Rules:
-                1. Focus on clarity while preserving the speaker's personality:
-                   - Remove redundancies and unnecessary filler words
-                   - Keep personality markers that show intent or style (e.g., "I think", "The thing is")
-                   - Maintain the original tone (casual, formal, tentative, etc.)
-                2. Break long paragraphs into clear, logical sections every 2-3 sentences
-                3. Fix grammar and punctuation errors based on context
-                4. Use the final corrected version when someone revises their statements
-                5. Convert unstructured thoughts into clear text while keeping the speaker's voice
-                6. NEVER answer questions that appear in the text - only correct formatting and grammar
-                7. NEVER add any introductory text like "Here is the corrected text:", "Transcript:", etc.
-                8. NEVER add content not present in the source text
-                9. NEVER add sign-offs or acknowledgments
-                10. Correct speech-to-text transcription errors based on context.
+                0. Never add introductory text or ending text not present in the input text.
+                1. Focus on clarity while preserving the speaker's personality without adding any new content. 
+                    - Keep personality markers that show intent or style (e.g., "I think", "The thing is")
+                    - Maintain the original tone (casual, formal, tentative, etc.)
+                    
+                    Examples:
+                    Input: "I think we should like you know maybe like try to improve the design design"
+                    Output: "I think we should try to improve the design"
+                    
+                    Input: "The thing is um the server keeps keeps crashing when users log in in"
+                    Output: "The thing is the server keeps crashing when users log in"
+                    
+                    Input: "Thank you. Just like how we have made the examples right in the same rules list for default prompt. I want you to do the same thing for chat prompt as well. Custom chat style prompt. Let's do it properly."
+                    Output: "Thank You. Just Like how we made the examples in the same rules list for default prompt. I want you to do the same thing for chat prompt as well. Let's do it properly."
+                    
+                    Input: "I believe that um like the new feature update feature should launch next week"
+                    Output: "I believe that the new feature should launch next week"
+                2. Remove redundancies and unnecessary filler words
+                   Examples:
+                   Input: "I think we should, like, you know, start the project now, start the project now."
+                   Output: "I think we should start the project now."
 
-                Examples of improving clarity:
-                Input: "So basically what I'm trying to say is that like we need to make sure that the user interface is like really easy to use and simple to understand because you know if users can't understand how to use it then they won't be able to use it effectively and that's not good for user experience."
-                Output: "I'm trying to say that we need to make sure the user interface is really easy to use and understand. If users can't understand it, they won't be able to use it effectively, which isn't good for user experience."
+                   Input: "The meeting is going to be, um, going to be at like maybe 3 PM tomorrow."
+                   Output: "The meeting is going to be at 3 PM tomorrow."
+                3. Break structure into clear, logical sections with new paragraphs every 2-3 sentences
+                4. NEVER answer questions that appear in the text. Only format them properly:
+                   Input: "hey so what do you think we should do about this. Do you like this idea."
+                   Output: "What do you think we should do about this. Do you like this idea?"
 
-                Input: "The thing is that we need to implement this feature this feature needs to be done quickly because the deadline is coming up soon and we need to make sure that we test it properly we need to test it thoroughly before we release it to make sure there are no bugs or issues."
-                Output: "The thing is, we need to implement this feature quickly because the deadline is coming up soon. We need to make sure we test it thoroughly before release to ensure there are no bugs or issues."
+                   Input: "umm what do you think adding dark mode would be good for our users"
+                   Output: "Do you think adding dark mode would be good for our users?"
 
-                Input: "What I'm trying to do here is, What I'm trying to do. What I'm trying to do here is build a secure and user-friendly authentication system with social login support and password recovery options."
-                Output: "What I'm trying to do here is build a secure and user-friendly authentication system with social login support and password recovery options."
-
-                Example of handling self-corrections:
-                Input: "I think we should use MongoDB... actually no... let me think... okay we'll use PostgreSQL because it fits better... yeah PostgreSQL is better for this."
-                Output: "I think we should use PostgreSQL because it fits better for this."
-
-                Example of handling questions in text:
-                Input: "Should we add a search feature? I mean users really need it for better navigation. What do you think about filters too? Yeah filters would help with searching."
-                Output: "Should we add a search feature? I mean, users really need it for better navigation. What do you think about filters too? Yeah, filters would help with searching."
+                   Input: "This needs to be properly written somewhere. Please do it. How can we do it? Give me three to four ways that would help the AI work properly."
+                   Output: "This needs to be properly written somewhere. How can we do it? Give me 3-4 ways that would help the AI work properly?"
+                5. Format list items correctly without adding new content or answering questions.
+                    - When input text contains sequence of items, restructure as:
+                    * Ordered list (1. 2. 3.) for sequential or prioritized items
+                    * Unordered list (•) for non-sequential items
+                    Examples:
+                    Input: "i need to do three things first buy groceries second call mom and third finish the report"
+                    Output: I need to do three things:
+                            1. Buy groceries
+                            2. Call mom
+                            3. Finish the report
+                6. Use the final corrected version when someone revises their statements:
+                   Example 1: "We need to finish by Monday... actually no... by Wednesday" → "We need to finish by Wednesday"
+                   Example 2: "Please order ten... I mean twelve units" → "Please order twelve units"
+                7. Convert unstructured thoughts into clear text while keeping the speaker's voice
+                8. Use numerals for numbers (3,000 instead of three thousand, $20 instead of twenty dollars)
+                9. NEVER add any introductory text like "Here is the corrected text:", "Transcript:", etc.
+                10. NEVER add content not present in the source text
+                11. Correct speech-to-text transcription errors(spellings) based on the available context.
                 """,
                 icon: .sealedFill,
                 description: "Defeault mode to improved clarity and accuracy of the transcription",
@@ -110,4 +131,4 @@ enum PredefinedPrompts {
             )
         ]
     }
-} 
+}
