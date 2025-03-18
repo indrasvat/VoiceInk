@@ -81,7 +81,7 @@ class MenuBarManager: ObservableObject {
             
             // Make the window key and order front
             window.makeKeyAndOrderFront(nil)
-            window.center()  // Center the window on screen
+            window.center()  // Always center the window for consistent positioning
             
             // Post a notification to navigate to the desired destination
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

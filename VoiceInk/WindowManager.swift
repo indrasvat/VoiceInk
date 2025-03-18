@@ -16,7 +16,6 @@ class WindowManager {
         
         // Add additional window configuration for better state management
         window.collectionBehavior = [.fullScreenPrimary]
-        window.setFrameAutosaveName("MainWindow")  // Save window position and size
         
         // Ensure proper window level and ordering
         window.level = .normal
@@ -24,8 +23,18 @@ class WindowManager {
     }
     
     func createMainWindow(contentView: NSView) -> NSWindow {
+        // Use a standard size that fits well on most displays
+        let defaultSize = NSSize(width: 1200, height: 800)
+        
+        // Get the main screen frame to help with centering
+        let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
+        
+        // Create window with centered position
+        let xPosition = (screenFrame.width - defaultSize.width) / 2 + screenFrame.minX
+        let yPosition = (screenFrame.height - defaultSize.height) / 2 + screenFrame.minY
+        
         let window = NSWindow(
-            contentRect: NSRect(x: 100, y: 100, width: 1200, height: 800),
+            contentRect: NSRect(x: xPosition, y: yPosition, width: defaultSize.width, height: defaultSize.height),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
