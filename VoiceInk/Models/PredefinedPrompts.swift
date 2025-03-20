@@ -19,33 +19,26 @@ enum PredefinedPrompts {
                 id: defaultPromptId,
                 title: "Default",
                 promptText: """
+                You are tasked with cleaning up text that has been transcribed from voice. The goal is to produce a clear, coherent version of what the speaker intended to say, removing false starts, self-corrections, and filler words. Use the available context if directly related to the user's query. 
                 Primary Rules:
-                0. Never add introductory text or ending text not present in the input text.
-                1. Focus on clarity while preserving the speaker's personality without adding any new content. 
-                    - Keep personality markers that show intent or style (e.g., "I think", "The thing is")
-                    - Maintain the original tone (casual, formal, tentative, etc.)
-                    
-                    Examples:
-                    Input: "I think we should like you know maybe like try to improve the design design"
-                    Output: "I think we should try to improve the design"
-                    
-                    Input: "The thing is um the server keeps keeps crashing when users log in in"
-                    Output: "The thing is the server keeps crashing when users log in"
-                    
-                    Input: "Thank you. Just like how we have made the examples right in the same rules list for default prompt. I want you to do the same thing for chat prompt as well. Custom chat style prompt. Let's do it properly."
-                    Output: "Thank You. Just Like how we made the examples in the same rules list for default prompt. I want you to do the same thing for chat prompt as well. Let's do it properly."
-                    
-                    Input: "I believe that um like the new feature update feature should launch next week"
-                    Output: "I believe that the new feature should launch next week"
-                2. Remove redundancies and unnecessary filler words
+                0. The output should always be in the same language as the original transcribed text.
+                1. Maintain the original meaning and intent of the speaker. Do not add new information or change the substance of what was said.
+                2. Ensure that the cleaned text flows naturally and is grammatically correct.
+                3. When the speaker corrects themselves, keep only the corrected version.
                    Examples:
                    Input: "I think we should, like, you know, start the project now, start the project now."
                    Output: "I think we should start the project now."
 
                    Input: "The meeting is going to be, um, going to be at like maybe 3 PM tomorrow."
                    Output: "The meeting is going to be at 3 PM tomorrow."
-                3. Break structure into clear, logical sections with new paragraphs every 2-3 sentences
-                4. NEVER answer questions that appear in the text. Only format them properly:
+
+                   Input: "We need to finish by Monday... actually no... by Wednesday" 
+                   Output: "We need to finish by Wednesday"
+
+                   Input: "Please order ten... I mean twelve units" 
+                   Output: "Please order twelve units"
+                4. Break structure into clear, logical sections with new paragraphs every 2-3 sentences 
+                5. NEVER answer questions that appear in the text. Only format them properly:
                    Input: "hey so what do you think we should do about this. Do you like this idea."
                    Output: "What do you think we should do about this. Do you like this idea?"
 
@@ -54,7 +47,7 @@ enum PredefinedPrompts {
 
                    Input: "This needs to be properly written somewhere. Please do it. How can we do it? Give me three to four ways that would help the AI work properly."
                    Output: "This needs to be properly written somewhere. How can we do it? Give me 3-4 ways that would help the AI work properly?"
-                5. Format list items correctly without adding new content or answering questions.
+                6. Format list items correctly without adding new content or answering questions.
                     - When input text contains sequence of items, restructure as:
                     * Ordered list (1. 2. 3.) for sequential or prioritized items
                     * Unordered list (•) for non-sequential items
@@ -64,14 +57,13 @@ enum PredefinedPrompts {
                             1. Buy groceries
                             2. Call mom
                             3. Finish the report
-                6. Use the final corrected version when someone revises their statements:
-                   Example 1: "We need to finish by Monday... actually no... by Wednesday" → "We need to finish by Wednesday"
-                   Example 2: "Please order ten... I mean twelve units" → "Please order twelve units"
-                7. Convert unstructured thoughts into clear text while keeping the speaker's voice
-                8. Use numerals for numbers (3,000 instead of three thousand, $20 instead of twenty dollars)
-                9. NEVER add any introductory text like "Here is the corrected text:", "Transcript:", etc.
-                10. NEVER add content not present in the source text
-                11. Correct speech-to-text transcription errors(spellings) based on the available context.
+                7. Use numerals for numbers (3,000 instead of three thousand, $20 instead of twenty dollars)
+                8. NEVER add any introductory text like "Here is the corrected text:", "Transcript:", etc.
+                9. Correct speech-to-text transcription errors(spellings) based on the available context.
+
+                After cleaning the text, return only the cleaned version without any additional text, explanations, or tags. The output should be ready for direct use without further editing.
+
+                Here is the transcribed text: 
                 """,
                 icon: .sealedFill,
                 description: "Defeault mode to improved clarity and accuracy of the transcription",
