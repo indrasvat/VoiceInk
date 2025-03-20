@@ -8,10 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		E1A261122CC143AC00B233D1 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = E1A261112CC143AC00B233D1 /* KeyboardShortcuts */; };
-		E1A4486E2D8C03A2004526F9 /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1A4486D2D8C03A1004526F9 /* whisper.xcframework */; };
-		E1A4486F2D8C03A2004526F9 /* whisper.xcframework in CopyFiles */ = {isa = PBXBuildFile; fileRef = E1A4486D2D8C03A1004526F9 /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E1ADD45A2CC5352A00303ECB /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = E1ADD4592CC5352A00303ECB /* LaunchAtLogin */; };
 		E1ADD45F2CC544F100303ECB /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E1ADD45E2CC544F100303ECB /* Sparkle */; };
+		E1B1FDBE2D8C403100ADD08E /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1B1FDBD2D8C403100ADD08E /* whisper.xcframework */; };
+		E1B1FDBF2D8C403100ADD08E /* whisper.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E1B1FDBD2D8C403100ADD08E /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,14 +32,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		E19E53AF2D36D80A0067F3D4 /* CopyFiles */ = {
+		E1B1FDC02D8C403100ADD08E /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				E1A4486F2D8C03A2004526F9 /* whisper.xcframework in CopyFiles */,
+				E1B1FDBF2D8C403100ADD08E /* whisper.xcframework in Embed Frameworks */,
 			);
+			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -48,7 +49,7 @@
 		E11473B02CBE0F0A00318EE4 /* VoiceInk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoiceInk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E11473C32CBE0F0B00318EE4 /* VoiceInkTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoiceInkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E11473CD2CBE0F0B00318EE4 /* VoiceInkUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoiceInkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E1A4486D2D8C03A1004526F9 /* whisper.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = whisper.xcframework; path = "../whisper.cpp/build-apple/whisper.xcframework"; sourceTree = "<group>"; };
+		E1B1FDBD2D8C403100ADD08E /* whisper.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = whisper.xcframework; path = "../../whisper.cpp/build-apple/whisper.xcframework"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -74,7 +75,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E1A4486E2D8C03A2004526F9 /* whisper.xcframework in Frameworks */,
+				E1B1FDBE2D8C403100ADD08E /* whisper.xcframework in Frameworks */,
 				E1ADD45A2CC5352A00303ECB /* LaunchAtLogin in Frameworks */,
 				E1ADD45F2CC544F100303ECB /* Sparkle in Frameworks */,
 				E1A261122CC143AC00B233D1 /* KeyboardShortcuts in Frameworks */,
@@ -122,7 +123,7 @@
 		E114741C2CBE1DE200318EE4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				E1A4486D2D8C03A1004526F9 /* whisper.xcframework */,
+				E1B1FDBD2D8C403100ADD08E /* whisper.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -137,7 +138,7 @@
 				E11473AC2CBE0F0A00318EE4 /* Sources */,
 				E11473AD2CBE0F0A00318EE4 /* Frameworks */,
 				E11473AE2CBE0F0A00318EE4 /* Resources */,
-				E19E53AF2D36D80A0067F3D4 /* CopyFiles */,
+				E1B1FDC02D8C403100ADD08E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

@@ -61,7 +61,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     let modelsDirectory: URL
     let recordingsDirectory: URL
     let enhancementService: AIEnhancementService?
-    private let licenseViewModel: LicenseViewModel
+    private var licenseViewModel: LicenseViewModel
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "WhisperState")
     private var transcriptionStartTime: Date?
     private var notchWindowManager: NotchWindowManager?
