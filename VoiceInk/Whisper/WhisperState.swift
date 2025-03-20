@@ -511,6 +511,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     
     private func setupNotifications() {
         NotificationCenter.default.addObserver(self, selector: #selector(handleToggleMiniRecorder), name: .toggleMiniRecorder, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleLicenseStatusChanged), name: .licenseStatusChanged, object: nil)
     }
     
     @objc public func handleToggleMiniRecorder() {
@@ -530,6 +531,11 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 }
             }
         }
+    }
+
+    @objc private func handleLicenseStatusChanged() {
+        // This will refresh the license state when it changes elsewhere in the app
+        self.licenseViewModel = LicenseViewModel()
     }
 
     private func showRecorderPanel() {
