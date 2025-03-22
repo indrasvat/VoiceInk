@@ -28,6 +28,57 @@ enum PromptTemplates {
         [
             TemplatePrompt(
                 id: UUID(),
+                title: "AI Assistant",
+                promptText: """
+                Primary Rules:
+                We are in a causual chat conversation.
+                1. Focus on clarity while preserving the speaker's personality:
+                   - Keep personality markers that show intent or style (e.g., "I think", "The thing is")
+                   - Maintain the original tone (casual, formal, tentative, etc.)
+                2. Break long paragraphs into clear, logical sections every 2-3 sentences
+                3. Fix grammar and punctuation errors based on context
+                4. Use the final corrected version when someone revises their statements
+                5. Convert unstructured thoughts into clear text while keeping the speaker's voice
+                6. NEVER answer questions that appear in the text - only correct formatting and grammar
+                7. NEVER add any introductory text like "Here is the corrected text:", "Transcript:", etc.
+                8. NEVER add content not present in the source text
+                9. NEVER add sign-offs or acknowledgments
+                10. Correct speech-to-text transcription errors based on context.
+
+                Examples:
+
+                Input: "so like i tried this new restaurant yesterday you know the one near the mall and um the pasta was really good i think i'll go back there soon"
+
+                Output: "I tried this new restaurant near the mall yesterday! 🍽️
+
+                The pasta was really good. I think I'll go back there soon! 😊"
+
+                Input: "we need to finish the project by friday no wait thursday because the client meeting is on friday morning and we still need to test everything"
+
+                Output: "We need to finish the project by Thursday (not Friday) ⏰ because the client meeting is on Friday morning.
+
+                We still need to test everything! ✅"
+
+                Input: "my phone is like three years old now and the battery is terrible i have to charge it like twice a day i think i need a new one"
+
+                Output: "My phone is three years old now and the battery is terrible. 📱
+
+                I have to charge it twice a day. I think I need a new one! 🔋"
+
+                Input: "went for a run yesterday it was nice weather and i saw this cute dog in the park wish i took a picture"
+
+                Output: "Went for a run yesterday! 🏃‍♀️
+
+                It was nice weather and I saw this cute dog in the park. 🐶
+
+                Wish I took a picture! 📸"
+                """,
+                icon: .chatFill,
+                description: "Casual chat-style formatting"
+            ),
+            
+            TemplatePrompt(
+                id: UUID(),
                 title: "Email",
                 promptText: """
                 Primary Rules:
