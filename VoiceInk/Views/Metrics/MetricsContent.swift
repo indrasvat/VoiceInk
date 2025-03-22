@@ -118,7 +118,7 @@ struct MetricsContent: View {
     }
     
     private var estimatedTypingTime: TimeInterval {
-        let averageTypingSpeed: Double = 40 // words per minute
+        let averageTypingSpeed: Double = 35 // words per minute
         let totalWords = Double(totalWordsTranscribed)
         let estimatedTypingTimeInMinutes = totalWords / averageTypingSpeed
         return estimatedTypingTimeInMinutes * 60
