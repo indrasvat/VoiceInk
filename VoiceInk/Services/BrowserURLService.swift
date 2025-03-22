@@ -60,7 +60,7 @@ enum BrowserType {
     }
     
     static var allCases: [BrowserType] {
-        [.safari, .arc, .chrome, .edge, .firefox, .brave, .opera, .vivaldi, .orion, .zen]
+        [.safari, .arc, .chrome, .edge, .brave, .opera, .vivaldi, .orion]
     }
     
     static var installedBrowsers: [BrowserType] {
