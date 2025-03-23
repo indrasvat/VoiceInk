@@ -53,13 +53,13 @@ actor WhisperContext {
             logger.notice("🌐 Using auto language detection")
         }
         
-        // Only use prompt for English language
-        if selectedLanguage == "en" && prompt != nil {
+        // Use prompt for all languages
+        if prompt != nil {
             promptCString = Array(prompt!.utf8CString)
             params.initial_prompt = promptCString?.withUnsafeBufferPointer { ptr in
                 ptr.baseAddress
             }
-            logger.notice("💬 Using prompt for transcription")
+            logger.notice("💬 Using prompt for transcription in language: \(selectedLanguage)")
         } else {
             promptCString = nil
             params.initial_prompt = nil
