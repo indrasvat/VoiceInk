@@ -47,8 +47,8 @@ class HotkeyManager: ObservableObject {
     private var keyPressStartTime: Date?
     private var lastKeyPressEndTime: Date?
     private var isLockedRecording = false  // For toggle mode after double-press
-    private let doublePressThreshold = 0.5  // 300ms for double-press detection
-    private let briefPressThreshold = 0.5  // 500ms threshold for brief press
+    private let doublePressThreshold = 0.5  // 500ms for double-press detection
+    private let briefPressThreshold = 1.0 // 1000ms threshold for brief press
     
     enum PushToTalkKey: String, CaseIterable {
         case rightOption = "rightOption"
