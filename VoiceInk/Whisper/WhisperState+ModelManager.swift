@@ -150,11 +150,17 @@ extension WhisperState {
     // MARK: - Resource Management
     
     func cleanupModelResources() async {
-        if !isRecording && !isProcessing {
+        // Only cleanup resources if we're not actively using them
+        let canCleanup = !isRecording && !isProcessing
+        
+        if canCleanup {
             logger.notice("🧹 Cleaning up Whisper resources")
+            // Release any resources held by the model
             await whisperContext?.releaseResources()
             whisperContext = nil
             isModelLoaded = false
+        } else {
+            logger.info("Skipping cleanup while recording or processing is active")
         }
     }
 } 

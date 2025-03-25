@@ -25,10 +25,10 @@ extension WhisperState {
     }
     
     func hideRecorderPanel() {
-        if isRecording {
-            Task {
-                await toggleRecord()
-            }
+        if recorderType == "notch" {
+            notchWindowManager?.hide()
+        } else {
+            miniWindowManager?.hide()
         }
     }
     
@@ -36,33 +36,31 @@ extension WhisperState {
     
     func toggleMiniRecorder() async {
         if isMiniRecorderVisible {
-            await dismissMiniRecorder()
-        } else {
-            Task {
+            if isRecording {
                 await toggleRecord()
-                
-                SoundManager.shared.playStartSound()
-                
-                await MainActor.run {
-                    showRecorderPanel()
-                    isMiniRecorderVisible = true
-                }
+            } else {
+                await cancelRecording()
             }
+        } else {
+            SoundManager.shared.playStartSound()
+            
+            await MainActor.run {
+                isMiniRecorderVisible = true
+            }
+            
+            await toggleRecord()
         }
     }
     
     func dismissMiniRecorder() async {
         logger.notice("📱 Dismissing \(self.recorderType) recorder")
         shouldCancelRecording = true
+        
         if isRecording {
             await recorder.stopRecording()
         }
         
-        if recorderType == "notch" {
-            notchWindowManager?.hide()
-        } else {
-            miniWindowManager?.hide()
-        }
+        hideRecorderPanel()
         
         await MainActor.run {
             isRecording = false
@@ -79,11 +77,8 @@ extension WhisperState {
     }
     
     func cancelRecording() async {
-        shouldCancelRecording = true
         SoundManager.shared.playEscSound()
-        if isRecording {
-            await recorder.stopRecording()
-        }
+        shouldCancelRecording = true
         await dismissMiniRecorder()
     }
     
@@ -95,26 +90,12 @@ extension WhisperState {
     }
     
     @objc public func handleToggleMiniRecorder() {
-        if isMiniRecorderVisible {
-            Task {
-                await toggleRecord()
-            }
-        } else {
-            Task {
-                await toggleRecord()
-                
-                SoundManager.shared.playStartSound()
-                
-                await MainActor.run {
-                    showRecorderPanel()
-                    isMiniRecorderVisible = true
-                }
-            }
+        Task {
+            await toggleMiniRecorder()
         }
     }
     
     @objc func handleLicenseStatusChanged() {
-        // This will refresh the license state when it changes elsewhere in the app
         self.licenseViewModel = LicenseViewModel()
     }
 } 
