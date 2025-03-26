@@ -14,7 +14,7 @@
                     <li>🌍 Better-formatted output for International languages</li>
                     <li>🔘 Improved push-to-talk key detection</li>
                     <li>🚫 Skip accidental key presses for push-to-talk</li>
-                    <li>⚡ Quick double press for hands-free recording (with push-to-talk function)</li>
+                    <li>⚡ Quick double press for hands-free recording (with push-to-talk key)</li>
                 </ul>
             ]]></description>
             <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v1.15/VoiceInk.dmg" length="7801350" type="application/octet-stream" sparkle:edSignature="zb+SP0UVh90vnkaRuFTI6iZUfmJkucSpaPE2oinCX1O8vFY78PtG9TV71hjvbYsWX30Mr4wezx7nYT+FdvsLDw=="/>
