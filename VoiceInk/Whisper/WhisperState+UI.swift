@@ -54,12 +54,18 @@ extension WhisperState {
     
     func dismissMiniRecorder() async {
         logger.notice("📱 Dismissing \(self.recorderType) recorder")
+        
+       
+        
         shouldCancelRecording = true
+
+        
         
         if isRecording {
             await recorder.stopRecording()
         }
-        
+
+         // Hide recorder panel first before doing anything else
         hideRecorderPanel()
         
         await MainActor.run {
@@ -71,6 +77,8 @@ extension WhisperState {
             isMiniRecorderVisible = false
             shouldCancelRecording = false
         }
+
+
         
         try? await Task.sleep(nanoseconds: 150_000_000)
         await cleanupModelResources()

@@ -391,8 +391,10 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 }
             }
             
+             await dismissMiniRecorder()
+             
             await cleanupModelResources()
-            await dismissMiniRecorder()
+           
             
         } catch {
             messageLog += "\(error.localizedDescription)\n"

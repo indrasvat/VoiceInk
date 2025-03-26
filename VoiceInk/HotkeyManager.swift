@@ -19,6 +19,13 @@ extension KeyboardShortcuts.Name {
     static let selectPrompt9 = Self("selectPrompt9")
 }
 
+// State machine enum for recorder state
+enum RecorderState {
+    case idle                // Not recording, recorder not visible
+    case recording           // Actively recording with key held down
+    case lockedRecording     // Recording in locked mode (after double press)
+}
+
 @MainActor
 class HotkeyManager: ObservableObject {
     @Published var isListening = false
@@ -43,11 +50,11 @@ class HotkeyManager: ObservableObject {
     private var runLoopSource: CFRunLoopSource?
     private var visibilityTask: Task<Void, Never>?
     
-    // New properties for advanced key handling
-    private var keyPressStartTime: Date?
-    private var lastKeyPressEndTime: Date?
-    private var isLockedRecording = false  // For toggle mode after double-press
-    private let doublePressThreshold = 0.5  // 500ms for double-press detection
+    // State machine properties
+    private var recorderState: RecorderState = .idle
+    private var lastKeyPressTime: Date?
+    private var keyPressStartTime: Date?  // Track when key was pressed for duration calculation
+    private let doublePressThreshold = 0.3  // 300ms for double-press detection
     private let briefPressThreshold = 1.0 // 1000ms threshold for brief press
     
     enum PushToTalkKey: String, CaseIterable {
@@ -96,9 +103,8 @@ class HotkeyManager: ObservableObject {
     
     private func resetKeyStates() {
         currentKeyState = false
-        keyPressStartTime = nil
-        lastKeyPressEndTime = nil
-        isLockedRecording = false
+        lastKeyPressTime = nil
+        recorderState = .idle
     }
     
     private func setupVisibilityObserver() {
@@ -112,6 +118,10 @@ class HotkeyManager: ObservableObject {
                     removeEscapeShortcut()
                     removeEnhancementShortcut()
                     removePromptShortcuts()
+                    // Ensure state is reset when recorder is dismissed externally
+                    if recorderState != .idle {
+                        recorderState = .idle
+                    }
                 }
             }
         }
@@ -176,52 +186,73 @@ class HotkeyManager: ObservableObject {
         
         currentKeyState = isKeyPressed
         
-        // Key is pressed down
         if isKeyPressed {
-            // If we're in locked recording mode, key press should stop recording
-            if isLockedRecording && whisperState.isMiniRecorderVisible {
-                isLockedRecording = false
-                await whisperState.handleToggleMiniRecorder()
-                return
-            }
-            
-            // Start timing the key press
-            keyPressStartTime = Date()
-            
-            // Check for double press
-            if let lastEndTime = lastKeyPressEndTime,
-               Date().timeIntervalSince(lastEndTime) < doublePressThreshold {
-                // Double press detected - set locked recording mode
-                isLockedRecording = true
-            }
-            
-            // Show recorder if not already visible
+            await handleKeyPress()
+        } else {
+            await handleKeyRelease()
+        }
+    }
+    
+    private func handleKeyPress() async {
+        let now = Date()
+        keyPressStartTime = now  // Track when the key was pressed
+        
+        switch recorderState {
+        case .idle:
+            // Start recording
+            recorderState = .recording
             if !whisperState.isMiniRecorderVisible {
                 await whisperState.handleToggleMiniRecorder()
             }
-        } 
-        // Key is released
-        else {
-            let now = Date()
-            lastKeyPressEndTime = now
             
-            // Calculate press duration
-            if let startTime = keyPressStartTime {
-                let pressDuration = now.timeIntervalSince(startTime)
-                
-                // 1. Brief press (< 500ms): Immediately dismiss recorder without transcribing
-                if pressDuration < briefPressThreshold && !isLockedRecording {
-                    await whisperState.dismissMiniRecorder()
-                } 
-                // 2. Normal press in non-locked mode: Use handleToggleMiniRecorder to stop and transcribe
-                else if !isLockedRecording && whisperState.isMiniRecorderVisible {
-                    await whisperState.handleToggleMiniRecorder()
-                }
-                // 3. If in locked mode, we don't do anything on release
+        case .recording:
+            // This shouldn't happen in normal flow
+            break
+            
+        case .lockedRecording:
+            // If in locked recording, pressing the key again should stop recording
+            recorderState = .idle
+            await whisperState.handleToggleMiniRecorder()
+        }
+        
+        // Check for double press
+        if let lastPress = lastKeyPressTime, 
+           now.timeIntervalSince(lastPress) < doublePressThreshold {
+            // Double press detected, transition to locked recording
+            recorderState = .lockedRecording
+        }
+        
+        lastKeyPressTime = now
+    }
+    
+    private func handleKeyRelease() async {
+        let now = Date()
+        
+        switch recorderState {
+        case .idle:
+            // This shouldn't happen in normal flow
+            break
+            
+        case .recording:
+            // Check if this was a brief press
+            if let startTime = keyPressStartTime, 
+               now.timeIntervalSince(startTime) < briefPressThreshold {
+                // Brief press - dismiss without transcribing
+                recorderState = .idle
+                await whisperState.dismissMiniRecorder()
+            } else {
+                // Normal release - stop recording and transcribe
+                recorderState = .idle
+                await whisperState.handleToggleMiniRecorder()
             }
             
-            keyPressStartTime = nil
+        case .lockedRecording:
+            // When in locked recording, key release does nothing
+            // Stay in locked recording state
+            break
         }
+        
+        keyPressStartTime = nil  // Reset press start time
     }
     
     private func setupEscapeShortcut() {
@@ -231,8 +262,8 @@ class HotkeyManager: ObservableObject {
                 guard let self = self,
                       await self.whisperState.isMiniRecorderVisible else { return }
                 
-                // Reset locked recording state when using Escape key
-                self.isLockedRecording = false
+                // Reset state machine when using Escape key
+                self.recorderState = .idle
                 
                 SoundManager.shared.playEscSound()
                 await self.whisperState.dismissMiniRecorder()
@@ -254,7 +285,6 @@ class HotkeyManager: ObservableObject {
             }
         }
     }
-    
     private func setupPromptShortcuts() {
         // Set up Command+1 through Command+9 shortcuts with proper key definitions
         KeyboardShortcuts.setShortcut(.init(.one, modifiers: .command), for: .selectPrompt1)
@@ -329,7 +359,16 @@ class HotkeyManager: ObservableObject {
     private func setupShortcutHandler() {
         KeyboardShortcuts.onKeyUp(for: .toggleMiniRecorder) { [weak self] in
             Task { @MainActor in
-                await self?.whisperState.handleToggleMiniRecorder()
+                guard let self = self else { return }
+                
+                // Update state when using the main shortcut
+                if self.recorderState == .idle {
+                    self.recorderState = .recording
+                } else {
+                    self.recorderState = .idle
+                }
+                
+                await self.whisperState.handleToggleMiniRecorder()
             }
         }
     }

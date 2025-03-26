@@ -150,7 +150,12 @@ extension WhisperState {
     // MARK: - Resource Management
     
     func cleanupModelResources() async {
-        // Only cleanup resources if we're not actively using them
+        recorder.stopRecording()
+        
+        // Add a small delay to ensure recording has fully stopped
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        
+        // Only cleanup model resources if we're not actively using them
         let canCleanup = !isRecording && !isProcessing
         
         if canCleanup {
