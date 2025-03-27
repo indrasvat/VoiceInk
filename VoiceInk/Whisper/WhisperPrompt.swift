@@ -50,7 +50,7 @@ class WhisperPrompt: ObservableObject {
         "ur": "السلام علیکم، کیسے ہیں آپ؟ آپ سے مل کر خوشی ہوئی۔",
         
         // Default prompt for unsupported languages
-        "default": "Hello, how are you? Nice to meet you."
+        "default": ""
     ]
     
     init() {
