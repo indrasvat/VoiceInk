@@ -159,30 +159,40 @@ struct RecordView: View {
     
     private var pushToTalkSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Toggle(isOn: $hotkeyManager.isPushToTalkEnabled) {
+            HStack {
                 Text("Push-to-Talk")
                     .font(.subheadline.weight(.medium))
-            }
-            .toggleStyle(.switch)
-            
-            if hotkeyManager.isPushToTalkEnabled {
-                pushToTalkOptions
+                
+                if hotkeyManager.isPushToTalkEnabled {
+                    SelectableKeyCapView(
+                        text: getKeySymbol(for: hotkeyManager.pushToTalkKey),
+                        subtext: getKeyText(for: hotkeyManager.pushToTalkKey),
+                        isSelected: true
+                    )
+                }
             }
         }
     }
     
-    private var pushToTalkOptions: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            PushToTalkKeySelector(selectedKey: $hotkeyManager.pushToTalkKey)
-            
-            HStack(spacing: 6) {
-                Image(systemName: "arrow.left.arrow.right.circle.fill")
-                    .foregroundColor(.secondary)
-                    .font(.system(size: 12))
-                Text("Click to switch")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
+    private func getKeySymbol(for key: HotkeyManager.PushToTalkKey) -> String {
+        switch key {
+        case .rightOption: return "⌥"
+        case .leftOption: return "⌥"
+        case .leftControl: return "⌃"
+        case .fn: return "Fn"
+        case .rightCommand: return "⌘"
+        case .rightShift: return "⇧"
+        }
+    }
+    
+    private func getKeyText(for key: HotkeyManager.PushToTalkKey) -> String {
+        switch key {
+        case .rightOption: return "Right Option"
+        case .leftOption: return "Left Option"
+        case .leftControl: return "Left Control"
+        case .fn: return "Function"
+        case .rightCommand: return "Right Command"
+        case .rightShift: return "Right Shift"
         }
     }
     
@@ -227,6 +237,10 @@ struct RecordView: View {
         switch hotkeyManager.pushToTalkKey {
         case .rightOption:
             keyName = "right Option (⌥)"
+        case .leftOption:
+            keyName = "left Option (⌥)"
+        case .leftControl:
+            keyName = "left Control (⌃)"
         case .fn:
             keyName = "Fn"
         case .rightCommand:

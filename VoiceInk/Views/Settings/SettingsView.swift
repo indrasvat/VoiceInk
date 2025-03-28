@@ -258,6 +258,10 @@ struct SettingsView: View {
         switch hotkeyManager.pushToTalkKey {
         case .rightOption:
             return "Using Right Option (⌥) key to quickly start recording. Release to stop."
+        case .leftOption:
+            return "Using Left Option (⌥) key to quickly start recording. Release to stop."
+        case .leftControl:
+            return "Using Left Control (⌃) key to quickly start recording. Release to stop."
         case .fn:
             return "Using Function (Fn) key to quickly start recording. Release to stop."
         case .rightCommand:
@@ -364,6 +368,8 @@ struct PushToTalkKeySelector: View {
     private func getKeySymbol(for key: HotkeyManager.PushToTalkKey) -> String {
         switch key {
         case .rightOption: return "⌥"
+        case .leftOption: return "⌥"
+        case .leftControl: return "⌃"
         case .fn: return "Fn"
         case .rightCommand: return "⌘"
         case .rightShift: return "⇧"
@@ -373,6 +379,8 @@ struct PushToTalkKeySelector: View {
     private func getKeyText(for key: HotkeyManager.PushToTalkKey) -> String {
         switch key {
         case .rightOption: return "Right Option"
+        case .leftOption: return "Left Option"
+        case .leftControl: return "Left Control"
         case .fn: return "Function"
         case .rightCommand: return "Right Command"
         case .rightShift: return "Right Shift"

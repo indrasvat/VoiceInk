@@ -43,19 +43,19 @@ class HotkeyManager: ObservableObject {
     private var runLoopSource: CFRunLoopSource?
     private var visibilityTask: Task<Void, Never>?
     
-    // New properties for advanced key handling
+    // Key handling properties
     private var keyPressStartTime: Date?
-    private var lastKeyPressEndTime: Date?
-    private var isLockedRecording = false  // For toggle mode after double-press
-    private let doublePressThreshold = 0.3  // 300ms for faster double-press detection
-    private let briefPressThreshold = 1.0 // 1000ms threshold for brief press
+    private let briefPressThreshold = 1.0 // 1 second threshold for brief press
+    private var isHandsFreeMode = false   // Track if we're in hands-free recording mode
 
-        // Add cooldown management
+    // Add cooldown management
     private var lastShortcutTriggerTime: Date?
     private let shortcutCooldownInterval: TimeInterval = 0.5 // 500ms cooldown
     
     enum PushToTalkKey: String, CaseIterable {
         case rightOption = "rightOption"
+        case leftOption = "leftOption"
+        case leftControl = "leftControl"
         case fn = "fn"
         case rightCommand = "rightCommand"
         case rightShift = "rightShift"
@@ -63,6 +63,8 @@ class HotkeyManager: ObservableObject {
         var displayName: String {
             switch self {
             case .rightOption: return "Right Option (⌥)"
+            case .leftOption: return "Left Option (⌥)"
+            case .leftControl: return "Left Control (⌃)"
             case .fn: return "Fn"
             case .rightCommand: return "Right Command (⌘)"
             case .rightShift: return "Right Shift (⇧)"
@@ -72,6 +74,8 @@ class HotkeyManager: ObservableObject {
         var keyCode: CGKeyCode {
             switch self {
             case .rightOption: return 0x3D
+            case .leftOption: return 0x3A
+            case .leftControl: return 0x3B
             case .fn: return 0x3F
             case .rightCommand: return 0x36
             case .rightShift: return 0x3C
@@ -81,6 +85,8 @@ class HotkeyManager: ObservableObject {
         var flags: CGEventFlags {
             switch self {
             case .rightOption: return .maskAlternate
+            case .leftOption: return .maskAlternate
+            case .leftControl: return .maskControl
             case .fn: return .maskSecondaryFn
             case .rightCommand: return .maskCommand
             case .rightShift: return .maskShift
@@ -101,8 +107,7 @@ class HotkeyManager: ObservableObject {
     private func resetKeyStates() {
         currentKeyState = false
         keyPressStartTime = nil
-        lastKeyPressEndTime = nil
-        isLockedRecording = false
+        isHandsFreeMode = false
     }
     
     private func setupVisibilityObserver() {
@@ -182,21 +187,13 @@ class HotkeyManager: ObservableObject {
         
         // Key is pressed down
         if isKeyPressed {
-            // If we're in locked recording mode, key press should stop recording
-            if isLockedRecording && whisperState.isMiniRecorderVisible {
-                isLockedRecording = false
-                await whisperState.handleToggleMiniRecorder()
-                return
-            }
-            
-            // Start timing the key press
             keyPressStartTime = Date()
             
-            // Check for double press
-            if let lastEndTime = lastKeyPressEndTime,
-               Date().timeIntervalSince(lastEndTime) < doublePressThreshold {
-                // Double press detected - set locked recording mode
-                isLockedRecording = true
+            // If we're in hands-free mode, stop recording
+            if isHandsFreeMode {
+                isHandsFreeMode = false
+                await whisperState.handleToggleMiniRecorder()
+                return
             }
             
             // Show recorder if not already visible
@@ -207,27 +204,19 @@ class HotkeyManager: ObservableObject {
         // Key is released
         else {
             let now = Date()
-            lastKeyPressEndTime = now
             
             // Calculate press duration
             if let startTime = keyPressStartTime {
                 let pressDuration = now.timeIntervalSince(startTime)
                 
-                // 1. Brief press (< 1s): Delay dismissal to check for double-press
-                if pressDuration < briefPressThreshold && !isLockedRecording {
-                    // Wait to see if this is part of a double-press
-                    try? await Task.sleep(nanoseconds: 200_000_000) // 200ms delay
-                    
-                    // After waiting, check if we should still dismiss
-                    if !isLockedRecording {
-                        await whisperState.dismissMiniRecorder()
-                    }
-                } 
-                // 2. Normal press in non-locked mode: Use handleToggleMiniRecorder to stop and transcribe
-                else if !isLockedRecording && whisperState.isMiniRecorderVisible {
+                if pressDuration < briefPressThreshold {
+                    // For brief presses, enter hands-free mode
+                    isHandsFreeMode = true
+                    // Continue recording - do nothing on release
+                } else {
+                    // For longer presses, stop and transcribe
                     await whisperState.handleToggleMiniRecorder()
                 }
-                // 3. If in locked mode, we don't do anything on release
             }
             
             keyPressStartTime = nil
@@ -240,9 +229,6 @@ class HotkeyManager: ObservableObject {
             Task { @MainActor in
                 guard let self = self,
                       await self.whisperState.isMiniRecorderVisible else { return }
-                
-                // Reset locked recording state when using Escape key
-                self.isLockedRecording = false
                 
                 SoundManager.shared.playEscSound()
                 await self.whisperState.dismissMiniRecorder()
