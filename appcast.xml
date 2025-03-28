@@ -10,12 +10,13 @@
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
                     <h3>What's New in Version 1.19 🚀⚡</h3>
-                <ul>
-                    <li>🌍 Better-formatted output for International languages</li>
-                    <li>🔘 Improved push-to-talk key detection</li>
-                    <li>🚫 Skip accidental key presses for push-to-talk</li>
-                    <li>⚡ Quick double press for hands-free recording (with push-to-talk key)</li>
-                </ul>
+                             <ul>
+                    <li>📵 Removed double click feature (now single press does hands free recording, Press and hold does normal push-to-talk)</li>
+                    <li>🌐 Added Cantonese language support #38 by @WingCH</li>
+                    <li>🧠 Improved Context Awareness</li>
+                    <li>✨ Better Consistent Results with AI assistant Prompt</li>
+                            </ul>
+                
             ]]></description>
             <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v1.19/VoiceInk.dmg" length="7801118" type="application/octet-stream" sparkle:edSignature="VjLUr0c7Whton7PUYWd1pmRb0n1NyrE+jvwd1ecvrv5w4CiVmfXFsLKR99sVxF3gUQuCQmqsJaRZo0PAk0rYAQ=="/>
         </item>
