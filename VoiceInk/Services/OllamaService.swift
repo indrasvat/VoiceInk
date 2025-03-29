@@ -17,7 +17,7 @@ class OllamaService: ObservableObject {
         struct ModelDetails: Codable {
             let format: String
             let family: String
-            let families: [String]
+            let families: [String]?
             let parameter_size: String
             let quantization_level: String
         }
