@@ -44,6 +44,13 @@ My goal is to make it **the most efficient and privacy-focused voice-to-text sol
 ### Download
 Get the latest version with a free trial from [tryvoiceink.com](https://tryvoiceink.com). Your purchase helps me work on VoiceInk full-time and continuously improve it with new features and updates.
 
+#### Homebrew
+Alternatively, you can install VoiceInk via `brew`:
+
+```shell
+brew install --cask voiceink
+```
+
 ### Build from Source
 As an open-source project, you can build VoiceInk yourself by following the instructions in [BUILDING.md](BUILDING.md). However, the compiled version includes additional benefits like automatic updates, priority support via Discord and email, and helps fund ongoing development.
 
