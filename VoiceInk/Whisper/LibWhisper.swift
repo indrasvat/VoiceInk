@@ -64,7 +64,6 @@ actor WhisperContext {
             promptCString = nil
             params.initial_prompt = nil
         }
-        
         // Adapted from whisper.objc
         params.print_realtime   = true
         params.print_progress   = false
@@ -73,12 +72,8 @@ actor WhisperContext {
         params.translate        = false
         params.n_threads        = Int32(maxThreads)
         params.offset_ms        = 0
-        params.no_context       = false
+        params.no_context       = true
         params.single_segment   = false
-        
-        // Adjusted parameters to reduce hallucination
-        params.suppress_blank   = true      // Keep suppressing blank outputs
-        params.suppress_nst     = true      // Additional suppression of non-speech tokens
 
         whisper_reset_timings(context)
         logger.notice("⚙️ Starting whisper transcription")
@@ -104,7 +99,8 @@ actor WhisperContext {
         for i in 0..<whisper_full_n_segments(context) {
             transcription += String(cString: whisper_full_get_segment_text(context, i))
         }
-        return transcription
+        // Apply hallucination filtering
+        return WhisperHallucinationFilter.filter(transcription)
     }
 
     static func createContext(path: String) async throws -> WhisperContext {
