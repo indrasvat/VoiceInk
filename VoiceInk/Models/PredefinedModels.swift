@@ -82,7 +82,7 @@ import Foundation
              size: "2.9 GiB",
              supportedLanguages: getLanguageDictionary(isMultilingual: true),
              description: "Large model v2, slower than Medium but more accurate, supports multiple languages",
-             speed: 0.25,
+             speed: 0.5,
              accuracy: 0.96,
              ramUsage: 3.8,
              hash: "0f4c8e30f21cf1769f637135f521436792c48186"
@@ -93,7 +93,7 @@ import Foundation
              size: "2.9 GiB",
              supportedLanguages: getLanguageDictionary(isMultilingual: true, isLargeV3: true),
              description: "Large model v3, very slow but most accurate, supports multiple languages",
-             speed: 0.2,
+             speed: 0.5,
              accuracy: 0.98,
              ramUsage: 3.9,
              hash: "ad82bf6a9043ceed055076d0fd39f5f186ff8062"
@@ -105,7 +105,7 @@ import Foundation
              supportedLanguages: getLanguageDictionary(isMultilingual: true, isLargeV3: true),
              description:
              "Large model v3 Turbo, faster than v3 with similar accuracy, supports multiple languages",
-             speed: 0.5,
+             speed: 0.7,
              accuracy: 0.97,
              ramUsage: 1.8,
              hash: "4af2b29d7ec73d781377bfd1758ca957a807e941"
@@ -116,7 +116,7 @@ import Foundation
              size: "547 MiB",
              supportedLanguages: getLanguageDictionary(isMultilingual: true, isLargeV3: true),
              description: "Quantized version of Large v3 Turbo, faster with slightly lower accuracy",
-             speed: 0.6,
+             speed: 0.7,
              accuracy: 0.96,
              ramUsage: 1.0,
              hash: "e050f7970618a659205450ad97eb95a18d69c9ee"

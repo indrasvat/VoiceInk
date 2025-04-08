@@ -7,6 +7,7 @@ enum WhisperStateError: Error, Identifiable {
     case accessibilityPermissionDenied
     case modelDownloadFailed
     case modelDeletionFailed
+    case unzipFailed
     case unknownError
     
     var id: String { UUID().uuidString }
@@ -27,6 +28,8 @@ extension WhisperStateError: LocalizedError {
             return "Failed to download the model."
         case .modelDeletionFailed:
             return "Failed to delete the model."
+        case .unzipFailed:
+            return "Failed to unzip the downloaded Core ML model."
         case .unknownError:
             return "An unknown error occurred."
         }
@@ -46,6 +49,8 @@ extension WhisperStateError: LocalizedError {
             return "Check your internet connection and try again. If the problem persists, try a different model."
         case .modelDeletionFailed:
             return "Restart the application and try again. If the problem persists, you may need to manually delete the model file."
+        case .unzipFailed:
+            return "The downloaded Core ML model archive might be corrupted. Try deleting the model and downloading it again. Check available disk space."
         case .unknownError:
             return "Please restart the application. If the problem persists, contact support."
         }
