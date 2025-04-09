@@ -116,9 +116,46 @@ extension WhisperState {
         }
     }
     
+    // Shows an alert about Core ML support and first-run optimization
+    private func showCoreMLAlert(for model: PredefinedModel, completion: @escaping () -> Void) {
+        Task { @MainActor in
+            let alert = NSAlert()
+            alert.messageText = "Core ML Support for \(model.displayName) Model"
+            alert.informativeText = "This Whisper model supports Core ML, which can improve performance by 2-4x on Apple Silicon devices.\n\nDuring the first run, it can take several minutes to optimize the model for your system. Subsequent runs will be much faster."
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "Download")
+            alert.addButton(withTitle: "Cancel")
+            
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                completion()
+            }
+        }
+    }
+    
     func downloadModel(_ model: PredefinedModel) async {
         guard let url = URL(string: model.downloadURL) else { return }
         
+        // Check if model supports Core ML (non-quantized models)
+        let supportsCoreML = !model.name.contains("q5") && !model.name.contains("q8")
+        
+        if supportsCoreML {
+            // Show the CoreML alert for models that support it
+            await MainActor.run {
+                showCoreMLAlert(for: model) {
+                    // This completion handler is called when user clicks "Download"
+                    Task {
+                        await self.performModelDownload(model, url)
+                    }
+                }
+            }
+        } else {
+            // Directly download the model if it doesn't support Core ML
+            await performModelDownload(model, url)
+        }
+    }
+    
+    private func performModelDownload(_ model: PredefinedModel, _ url: URL) async {
         do {
             let whisperModel = try await downloadMainModel(model, from: url)
             
