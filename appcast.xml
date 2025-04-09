@@ -9,7 +9,7 @@
             <sparkle:shortVersionString>1.21</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
-                    <h3>What's New in Version 1.20 🚀⚡</h3>
+                    <h3>What's New in Version 1.21 🚀⚡</h3>
                              <ul>
                     <li>🚀 Added coreML support(2-4X better performance).</li>
                     <li>🔍 Removed unnecessary Models/ re-designed the models View</li>
