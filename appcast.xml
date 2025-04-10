@@ -5,18 +5,18 @@
         <item>
             <title>1.21</title>
             <pubDate>Sat, 6 Apr 2025 12:00:00 +0545</pubDate>
-            <sparkle:version>120</sparkle:version>
+            <sparkle:version>121</sparkle:version>
             <sparkle:shortVersionString>1.21</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
                     <h3>What's New in Version 1.21 🚀⚡</h3>
                              <ul>
-                    <li>🚀 Added coreML support(2-4X better performance).</li>
-                    <li>🔍 Removed unnecessary Models/ re-designed the models View</li>
-                    
-                             </ul>
+                                <li>🚀 Added coreML support (2-4x improvements in performance)</li>
+                                <li>🎨 Cleaned up AI models, and redesigned the view</li>
+                                <li>🔧 Minor Improvements & Bug fixes</li>
+                            </ul>
             ]]></description>
-            <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v1.21/VoiceInk.dmg" length="7987509" type="application/octet-stream" sparkle:edSignature="0Rbt/SMYd5GP+f9oxfvMLBDgjftfeB/gazyA4jPOBKSQ5AdeN2h7f9vDf6QSGyZ0pRukS/CihHjQLx8OcOWRBg=="/>
+            enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v1.21/VoiceInk.dmg" length="7997667" type="application/octet-stream" sparkle:edSignature="1M2IaHl6cLpYIMJ24TeTQyilL92CA7YIk/hMOC48v4YPC5pe44NWRCRL/KnXAdTcP7n/ib3tXlcozdAdPH/7Ag=="/>
         </item>
     </channel>
 </rss>
