@@ -20,7 +20,7 @@ class LicenseViewModel: ObservableObject {
     private let userDefaults = UserDefaults.standard
     
     init() {
-        checkLicenseState()
+        loadLicenseState()
     }
     
     func startTrial() {
@@ -32,40 +32,17 @@ class LicenseViewModel: ObservableObject {
         }
     }
     
-    private func checkLicenseState() {
+    private func loadLicenseState() {
         // Check for existing license key
         if let licenseKey = userDefaults.licenseKey {
             self.licenseKey = licenseKey
             
-            // Check if this license requires activation
-            if userDefaults.bool(forKey: "VoiceInkLicenseRequiresActivation") {
-                // If we have an activation ID, we need to validate it
-                if let activationId = userDefaults.activationId {
-                    Task {
-                        do {
-                            let isValid = try await polarService.validateLicenseKeyWithActivation(licenseKey, activationId: activationId)
-                            if isValid {
-                                licenseState = .licensed
-                            } else {
-                                // If validation fails, we'll need to reactivate
-                                userDefaults.activationId = nil
-                                licenseState = .trialExpired
-                            }
-                        } catch {
-                            // If there's an error, we'll need to reactivate
-                            userDefaults.activationId = nil
-                            licenseState = .trialExpired
-                        }
-                    }
-                } else {
-                    // We have a license key but no activation ID, so we need to activate
-                    licenseState = .licensed
-                }
-            } else {
-                // This license doesn't require activation (unlimited devices)
+            // If we have a license key, trust that it's licensed
+            // Skip server validation on startup
+            if userDefaults.activationId != nil || !userDefaults.bool(forKey: "VoiceInkLicenseRequiresActivation") {
                 licenseState = .licensed
+                return
             }
-            return
         }
         
         // Check if this is first launch
@@ -194,7 +171,7 @@ class LicenseViewModel: ObservableObject {
         licenseKey = ""
         validationMessage = nil
         NotificationCenter.default.post(name: .licenseStatusChanged, object: nil)
-        checkLicenseState()
+        loadLicenseState()
     }
 }
 
