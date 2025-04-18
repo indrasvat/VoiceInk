@@ -179,6 +179,7 @@ struct RecordView: View {
         case .rightOption: return "⌥"
         case .leftOption: return "⌥"
         case .leftControl: return "⌃"
+        case .rightControl: return "⌃"
         case .fn: return "Fn"
         case .rightCommand: return "⌘"
         case .rightShift: return "⇧"
@@ -190,6 +191,7 @@ struct RecordView: View {
         case .rightOption: return "Right Option"
         case .leftOption: return "Left Option"
         case .leftControl: return "Left Control"
+        case .rightControl: return "Right Control"
         case .fn: return "Function"
         case .rightCommand: return "Right Command"
         case .rightShift: return "Right Shift"
@@ -241,6 +243,8 @@ struct RecordView: View {
             keyName = "left Option (⌥)"
         case .leftControl:
             keyName = "left Control (⌃)"
+        case .rightControl:
+            keyName = "right Control (⌃)"
         case .fn:
             keyName = "Fn"
         case .rightCommand:

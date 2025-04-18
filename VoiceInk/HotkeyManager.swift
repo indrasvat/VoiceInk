@@ -56,6 +56,7 @@ class HotkeyManager: ObservableObject {
         case rightOption = "rightOption"
         case leftOption = "leftOption"
         case leftControl = "leftControl"
+        case rightControl = "rightControl"
         case fn = "fn"
         case rightCommand = "rightCommand"
         case rightShift = "rightShift"
@@ -65,6 +66,7 @@ class HotkeyManager: ObservableObject {
             case .rightOption: return "Right Option (⌥)"
             case .leftOption: return "Left Option (⌥)"
             case .leftControl: return "Left Control (⌃)"
+            case .rightControl: return "Right Control (⌃)"
             case .fn: return "Fn"
             case .rightCommand: return "Right Command (⌘)"
             case .rightShift: return "Right Shift (⇧)"
@@ -76,6 +78,7 @@ class HotkeyManager: ObservableObject {
             case .rightOption: return 0x3D
             case .leftOption: return 0x3A
             case .leftControl: return 0x3B
+            case .rightControl: return 0x3E
             case .fn: return 0x3F
             case .rightCommand: return 0x36
             case .rightShift: return 0x3C
@@ -87,6 +90,7 @@ class HotkeyManager: ObservableObject {
             case .rightOption: return .maskAlternate
             case .leftOption: return .maskAlternate
             case .leftControl: return .maskControl
+            case .rightControl: return .maskControl
             case .fn: return .maskSecondaryFn
             case .rightCommand: return .maskCommand
             case .rightShift: return .maskShift
