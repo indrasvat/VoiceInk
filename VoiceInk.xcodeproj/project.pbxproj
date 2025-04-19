@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E11CB51E2DB1F8AF00F9F3ED /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E11CB51D2DB1F8AF00F9F3ED /* whisper.xcframework */; };
-		E11CB51F2DB1F8AF00F9F3ED /* whisper.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E11CB51D2DB1F8AF00F9F3ED /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		E172CAF02DB35C5300937883 /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E136D0102DA3EE57000E1E8A /* whisper.xcframework */; };
+		E172CAF12DB35C5300937883 /* whisper.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E136D0102DA3EE57000E1E8A /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E1A261122CC143AC00B233D1 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = E1A261112CC143AC00B233D1 /* KeyboardShortcuts */; };
 		E1ADD45A2CC5352A00303ECB /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = E1ADD4592CC5352A00303ECB /* LaunchAtLogin */; };
 		E1ADD45F2CC544F100303ECB /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E1ADD45E2CC544F100303ECB /* Sparkle */; };
@@ -33,13 +33,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		E11CB5202DB1F8AF00F9F3ED /* Embed Frameworks */ = {
+		E172CAF22DB35C5300937883 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				E11CB51F2DB1F8AF00F9F3ED /* whisper.xcframework in Embed Frameworks */,
+				E172CAF12DB35C5300937883 /* whisper.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -80,7 +80,7 @@
 				E1ADD45A2CC5352A00303ECB /* LaunchAtLogin in Frameworks */,
 				E1ADD45F2CC544F100303ECB /* Sparkle in Frameworks */,
 				E1A261122CC143AC00B233D1 /* KeyboardShortcuts in Frameworks */,
-				E11CB51E2DB1F8AF00F9F3ED /* whisper.xcframework in Frameworks */,
+				E172CAF02DB35C5300937883 /* whisper.xcframework in Frameworks */,
 				E1F5FA7A2DA6CBF900B1FD8A /* Zip in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -142,7 +142,7 @@
 				E11473AC2CBE0F0A00318EE4 /* Sources */,
 				E11473AD2CBE0F0A00318EE4 /* Frameworks */,
 				E11473AE2CBE0F0A00318EE4 /* Resources */,
-				E11CB5202DB1F8AF00F9F3ED /* Embed Frameworks */,
+				E172CAF22DB35C5300937883 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

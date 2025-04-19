@@ -39,9 +39,11 @@ class HotkeyManager: ObservableObject {
     
     private var whisperState: WhisperState
     private var currentKeyState = false
-    private var eventTap: CFMachPort?
-    private var runLoopSource: CFRunLoopSource?
     private var visibilityTask: Task<Void, Never>?
+    
+    // Change from single monitor to separate local and global monitors
+    private var globalEventMonitor: Any?
+    private var localEventMonitor: Any?
     
     // Key handling properties
     private var keyPressStartTime: Date?
@@ -51,6 +53,9 @@ class HotkeyManager: ObservableObject {
     // Add cooldown management
     private var lastShortcutTriggerTime: Date?
     private let shortcutCooldownInterval: TimeInterval = 0.5 // 500ms cooldown
+    
+    private var fnDebounceTask: Task<Void, Never>?
+    private var pendingFnKeyState: Bool? = nil
     
     enum PushToTalkKey: String, CaseIterable {
         case rightOption = "rightOption"
@@ -82,18 +87,6 @@ class HotkeyManager: ObservableObject {
             case .fn: return 0x3F
             case .rightCommand: return 0x36
             case .rightShift: return 0x3C
-            }
-        }
-        
-        var flags: CGEventFlags {
-            switch self {
-            case .rightOption: return .maskAlternate
-            case .leftOption: return .maskAlternate
-            case .leftControl: return .maskControl
-            case .rightControl: return .maskControl
-            case .fn: return .maskSecondaryFn
-            case .rightCommand: return .maskCommand
-            case .rightShift: return .maskShift
             }
         }
     }
@@ -134,59 +127,87 @@ class HotkeyManager: ObservableObject {
         removeKeyMonitor()
         
         guard isPushToTalkEnabled else { return }
-        guard AXIsProcessTrusted() else { return }
         
-        let eventMask = (1 << CGEventType.flagsChanged.rawValue)
+        // Global monitor for capturing flags when app is in background
+        globalEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            guard let self = self else { return }
+            
+            Task { @MainActor in
+                await self.handleNSKeyEvent(event)
+            }
+        }
         
-        guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
-            place: .headInsertEventTap,
-            options: .defaultTap,
-            eventsOfInterest: CGEventMask(eventMask),
-            callback: { proxy, type, event, refcon in
-                let manager = Unmanaged<HotkeyManager>.fromOpaque(refcon!).takeUnretainedValue()
-                
-                if type == .flagsChanged {
-                    Task { @MainActor in
-                        await manager.handleKeyEvent(event)
-                    }
-                }
-                
-                return Unmanaged.passRetained(event)
-            },
-            userInfo: Unmanaged.passUnretained(self).toOpaque()
-        ) else { return }
-        
-        self.eventTap = tap
-        self.runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        
-        if let runLoopSource = self.runLoopSource {
-            CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-            CGEvent.tapEnable(tap: tap, enable: true)
+        // Local monitor for capturing flags when app has focus
+        localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            guard let self = self else { return event }
+            
+            Task { @MainActor in
+                await self.handleNSKeyEvent(event)
+            }
+            
+            return event // Return the event to allow normal processing
         }
     }
     
     private func removeKeyMonitor() {
-        if let tap = eventTap {
-            CGEvent.tapEnable(tap: tap, enable: false)
-            if let runLoopSource = self.runLoopSource {
-                CFRunLoopRemoveSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-            }
-            self.eventTap = nil
-            self.runLoopSource = nil
+        if let monitor = globalEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalEventMonitor = nil
+        }
+        
+        if let monitor = localEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            localEventMonitor = nil
         }
     }
     
-    private func handleKeyEvent(_ event: CGEvent) async {
-        let flags = event.flags
-        let keycode = event.getIntegerValueField(.keyboardEventKeycode)
+    private func handleNSKeyEvent(_ event: NSEvent) async {
+        let keycode = event.keyCode
+        let flags = event.modifierFlags
         
-        let isKeyPressed = flags.contains(pushToTalkKey.flags)
-        let isTargetKey = pushToTalkKey == .fn ? true : keycode == pushToTalkKey.keyCode
+        // Check if the target key is pressed based on the modifier flags
+        var isKeyPressed = false
+        var isTargetKey = false
+        
+        switch pushToTalkKey {
+        case .rightOption, .leftOption:
+            isKeyPressed = flags.contains(.option)
+            isTargetKey = keycode == pushToTalkKey.keyCode
+        case .leftControl, .rightControl:
+            isKeyPressed = flags.contains(.control)
+            isTargetKey = keycode == pushToTalkKey.keyCode
+        case .fn:
+            isKeyPressed = flags.contains(.function)
+            isTargetKey = keycode == pushToTalkKey.keyCode
+            // Debounce only for Fn key
+            if isTargetKey {
+                pendingFnKeyState = isKeyPressed
+                fnDebounceTask?.cancel()
+                fnDebounceTask = Task { [pendingState = isKeyPressed] in
+                    try? await Task.sleep(nanoseconds: 75_000_000) // 75ms
+                    // Only act if the state hasn't changed during debounce
+                    if pendingFnKeyState == pendingState {
+                        await MainActor.run {
+                            self.processPushToTalkKey(isKeyPressed: pendingState)
+                        }
+                    }
+                }
+                return
+            }
+        case .rightCommand:
+            isKeyPressed = flags.contains(.command)
+            isTargetKey = keycode == pushToTalkKey.keyCode
+        case .rightShift:
+            isKeyPressed = flags.contains(.shift)
+            isTargetKey = keycode == pushToTalkKey.keyCode
+        }
         
         guard isTargetKey else { return }
+        processPushToTalkKey(isKeyPressed: isKeyPressed)
+    }
+    
+    private func processPushToTalkKey(isKeyPressed: Bool) {
         guard isKeyPressed != currentKeyState else { return }
-        
         currentKeyState = isKeyPressed
         
         // Key is pressed down
@@ -196,13 +217,13 @@ class HotkeyManager: ObservableObject {
             // If we're in hands-free mode, stop recording
             if isHandsFreeMode {
                 isHandsFreeMode = false
-                await whisperState.handleToggleMiniRecorder()
+                Task { @MainActor in await whisperState.handleToggleMiniRecorder() }
                 return
             }
             
             // Show recorder if not already visible
             if !whisperState.isMiniRecorderVisible {
-                await whisperState.handleToggleMiniRecorder()
+                Task { @MainActor in await whisperState.handleToggleMiniRecorder() }
             }
         } 
         // Key is released
@@ -219,7 +240,7 @@ class HotkeyManager: ObservableObject {
                     // Continue recording - do nothing on release
                 } else {
                     // For longer presses, stop and transcribe
-                    await whisperState.handleToggleMiniRecorder()
+                    Task { @MainActor in await whisperState.handleToggleMiniRecorder() }
                 }
             }
             

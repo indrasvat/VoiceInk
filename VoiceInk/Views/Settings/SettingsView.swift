@@ -14,7 +14,6 @@ struct SettingsView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
     @State private var showResetOnboardingAlert = false
     @State private var currentShortcut = KeyboardShortcuts.getShortcut(for: .toggleMiniRecorder)
-    @State private var hasAccessibilityPermission = AXIsProcessTrusted()
     
     var body: some View {
         ScrollView {
@@ -67,24 +66,6 @@ struct SettingsView: View {
                                 .toggleStyle(.switch)
                             
                             if hotkeyManager.isPushToTalkEnabled {
-                                if !hasAccessibilityPermission {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .foregroundColor(.red)
-                                        Text("Please enable Accessibility permissions in System Settings to use Push-to-Talk")
-                                            .settingsDescription()
-                                            .foregroundColor(.red)
-                                    }
-                                    .padding(.vertical, 4)
-                                    
-                                    Button("Open System Settings") {
-                                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .controlSize(.small)
-                                    .padding(.bottom, 4)
-                                }
-                                
                                 if currentShortcut == nil {
                                     HStack(spacing: 6) {
                                         Image(systemName: "exclamationmark.triangle.fill")
@@ -230,19 +211,6 @@ struct SettingsView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 6)
-        }
-        .onAppear {
-            // Check accessibility permission on appear
-            hasAccessibilityPermission = AXIsProcessTrusted()
-            
-            // Start observing accessibility changes
-            NotificationCenter.default.addObserver(
-                forName: NSNotification.Name("AXIsProcessTrustedChanged"),
-                object: nil,
-                queue: .main
-            ) { _ in
-                hasAccessibilityPermission = AXIsProcessTrusted()
-            }
         }
         .alert("Reset Onboarding", isPresented: $showResetOnboardingAlert) {
             Button("Cancel", role: .cancel) { }
