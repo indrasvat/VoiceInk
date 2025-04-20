@@ -167,7 +167,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                                 self.isVisualizerActive = true
                             }
                             
-                            async let recordingTask = self.recorder.startRecording(toOutputFile: file, delegate: self)
+                            async let recordingTask = self.recorder.startRecording(toOutputFile: file)
                             async let windowConfigTask = ActiveWindowService.shared.applyConfigurationForCurrentApp()
                             
                             async let modelLoadingTask: Void = {
