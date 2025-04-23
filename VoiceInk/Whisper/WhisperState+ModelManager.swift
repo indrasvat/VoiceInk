@@ -299,7 +299,7 @@ extension WhisperState {
     // MARK: - Helper Methods
     
     private func logError(_ message: String, _ error: Error) {
-        logger.notice("\(message): \(error.localizedDescription)\n")  
+        self.logger.error("\(message): \(error.localizedDescription)")
     }
 }
 
