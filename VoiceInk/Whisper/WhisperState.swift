@@ -155,8 +155,8 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                                 self.isRecording = true
                                 self.isVisualizerActive = true
                             }
-                            async let recordingTask = self.recorder.startRecording(toOutputFile: file)
-                            async let windowConfigTask = ActiveWindowService.shared.applyConfigurationForCurrentApp()
+                            async let recordingTask: () = self.recorder.startRecording(toOutputFile: file)
+                            async let windowConfigTask: () = ActiveWindowService.shared.applyConfigurationForCurrentApp()
                             async let modelLoadingTask: Void = {
                                 if let currentModel = await self.currentModel, await self.whisperContext == nil {
                                     logger.notice("🔄 Loading model in parallel with recording: \(currentModel.name)")
@@ -321,6 +321,10 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                     \n\(text)
                     """
             }
+
+            // Add a space to the end of the text
+            text += " "
+
             SoundManager.shared.playStopSound()
             if AXIsProcessTrusted() {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
