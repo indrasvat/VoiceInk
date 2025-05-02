@@ -140,48 +140,70 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 return
             }
             shouldCancelRecording = false
-            logger.notice("🎙️ Starting recording")
+            logger.notice("🎙️ Starting recording sequence...")
             requestRecordPermission { [self] granted in
                 if granted {
                     Task {
                         do {
-                            let file = try FileManager.default.url(for: .documentDirectory,
-                                in: .userDomainMask,
-                                appropriateFor: nil,
-                                create: true)
-                                .appending(path: "output.wav")
+                            // --- Prepare temporary file URL within Application Support base directory ---
+                            let baseAppSupportDirectory = self.recordingsDirectory.deletingLastPathComponent()
+                            let file = baseAppSupportDirectory.appendingPathComponent("output.wav")
+                            // Ensure the base directory exists
+                            try? FileManager.default.createDirectory(at: baseAppSupportDirectory, withIntermediateDirectories: true)
+                            // Clean up any old temporary file first
+                            try? FileManager.default.removeItem(at: file)
                             self.recordedFile = file
-                            await MainActor.run {
-                                self.isRecording = true
-                                self.isVisualizerActive = true
-                            }
-                            async let recordingTask: () = self.recorder.startRecording(toOutputFile: file)
+
+                            // --- Start concurrent tasks immediately ---
+
                             async let windowConfigTask: () = ActiveWindowService.shared.applyConfigurationForCurrentApp()
                             async let modelLoadingTask: Void = {
                                 if let currentModel = await self.currentModel, await self.whisperContext == nil {
-                                    logger.notice("🔄 Loading model in parallel with recording: \(currentModel.name)")
+                                    self.logger.notice("🔄 Loading model in parallel with recording: \(currentModel.name)")
                                     do {
                                         try await self.loadModel(currentModel)
                                     } catch {
-                                        logger.error("❌ Model preloading failed: \(error.localizedDescription)")
+                                        self.logger.error("❌ Model preloading failed: \(error.localizedDescription)")
                                     }
                                 }
                             }()
-                            try await recordingTask
-                            await windowConfigTask
-                            if let enhancementService = self.enhancementService,
-                               enhancementService.isEnhancementEnabled && 
-                               enhancementService.useScreenCaptureContext {
-                                await enhancementService.captureScreenContext()
+                            async let contextCaptureTask: ()? = {
+                                if let enhancementService = self.enhancementService,
+                                   enhancementService.isEnhancementEnabled &&
+                                   enhancementService.useScreenCaptureContext {
+                                    await enhancementService.captureScreenContext()
+                                    return ()
+                                }
+                                return nil
+                            }()
+
+                            try await self.recorder.startRecording(toOutputFile: file)
+                            self.logger.notice("✅ Audio engine started successfully.")
+
+                            await MainActor.run {
+                                self.isRecording = true
+                                self.isVisualizerActive = true
+                                self.logger.notice("✅ UI updated to recording state.")
                             }
+
+                            await windowConfigTask
                             await modelLoadingTask
+
                         } catch {
+                            self.logger.error("❌ Failed to start recording: \(error.localizedDescription)")
                             await MainActor.run {
                                 self.isRecording = false
                                 self.isVisualizerActive = false
                             }
+                            if let url = self.recordedFile {
+                                try? FileManager.default.removeItem(at: url)
+                                self.recordedFile = nil
+                                self.logger.notice("🗑️ Cleaned up temporary recording file after failed start.")
+                            }
                         }
                     }
+                } else {
+                    logger.error("❌ Recording permission denied.")
                 }
             }
         }
@@ -373,6 +395,8 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         let fileName = "\(UUID().uuidString).wav"
         let permanentURL = recordingsDirectory.appendingPathComponent(fileName)
         try FileManager.default.copyItem(at: tempURL, to: permanentURL)
+     
+        try? FileManager.default.removeItem(at: tempURL)
         return permanentURL
     }
 }
