@@ -3,19 +3,19 @@
     <channel>
         <title>VoiceInk Releases</title>
         <item>
-            <title>1.24</title>
+            <title>1.25</title>
             <pubDate>Sat, 24 Apr 2025 12:00:00 +0545</pubDate>
-            <sparkle:version>124</sparkle:version>
-            <sparkle:shortVersionString>1.24</sparkle:shortVersionString>
+            <sparkle:version>125</sparkle:version>
+            <sparkle:shortVersionString>1.25</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
-                    <h3>What's New in Version 1.24 🚀⚡</h3>
+                    <h3>What's New in Version 1.25 🚀⚡</h3>
                              <ul>
-                                <li>▶️ Add space at the end of transcription <li>
+                                <li>▶️ Using Applescript for muting/unmuting functionality<li>
                                 <li>🐛 Minor Bug Fixes & Improvements</li>
                             </ul>
             ]]></description>
-           <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/1.24/VoiceInk.dmg" length="7994145" type="application/octet-stream" sparkle:edSignature="Bac1g9C9j24+LKdWaWZZfmXVoe5NIEMG6bWgacWrpz2MtWNCa6pmwqbez/SBJBXkYVO6X8HafADbZNecsgCpBg=="/>
+           <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v1.25/VoiceInk.dmg" length="7988164" type="application/octet-stream" sparkle:edSignature="yUf9CDBmFOCTXgzFLybbxq4/TL5AXDdYXfJpgxurBDdfsBu6Ck981gjvrGVGV+xJuCDDCXjVa8s5tfJUpESiCw=="/>
         </item>
     </channel>
 </rss>
