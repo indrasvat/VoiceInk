@@ -154,28 +154,8 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                             try? FileManager.default.removeItem(at: file)
                             self.recordedFile = file
 
-                            // --- Start concurrent tasks immediately ---
-
+                            // --- Start concurrent window config task immediately ---
                             async let windowConfigTask: () = ActiveWindowService.shared.applyConfigurationForCurrentApp()
-                            async let modelLoadingTask: Void = {
-                                if let currentModel = await self.currentModel, await self.whisperContext == nil {
-                                    self.logger.notice("🔄 Loading model in parallel with recording: \(currentModel.name)")
-                                    do {
-                                        try await self.loadModel(currentModel)
-                                    } catch {
-                                        self.logger.error("❌ Model preloading failed: \(error.localizedDescription)")
-                                    }
-                                }
-                            }()
-                            async let contextCaptureTask: ()? = {
-                                if let enhancementService = self.enhancementService,
-                                   enhancementService.isEnhancementEnabled &&
-                                   enhancementService.useScreenCaptureContext {
-                                    await enhancementService.captureScreenContext()
-                                    return ()
-                                }
-                                return nil
-                            }()
 
                             try await self.recorder.startRecording(toOutputFile: file)
                             self.logger.notice("✅ Audio engine started successfully.")
@@ -183,11 +163,27 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                             await MainActor.run {
                                 self.isRecording = true
                                 self.isVisualizerActive = true
-                                self.logger.notice("✅ UI updated to recording state.")
+                            }
+
+                            Task {
+                                if let currentModel = await self.currentModel, await self.whisperContext == nil {
+                                    do {
+                                        try await self.loadModel(currentModel)
+                                    } catch {
+                                        self.logger.error("❌ Model loading failed: \(error.localizedDescription)")
+                                    }
+                                }
+                            }
+
+                            Task {
+                                if let enhancementService = self.enhancementService,
+                                   enhancementService.isEnhancementEnabled &&
+                                   enhancementService.useScreenCaptureContext {
+                                    await enhancementService.captureScreenContext()
+                                }
                             }
 
                             await windowConfigTask
-                            await modelLoadingTask
 
                         } catch {
                             self.logger.error("❌ Failed to start recording: \(error.localizedDescription)")
