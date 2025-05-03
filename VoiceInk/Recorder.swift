@@ -46,8 +46,6 @@ class Recorder: ObservableObject {
                 } catch {
                     logger.error("❌ Failed to restart recording after device change: \(error.localizedDescription)")
                 }
-            } else {
-                logger.warning("⚠️ No file URL available to restart recording after device change.")
             }
         }
         isReconfiguring = false
@@ -64,14 +62,11 @@ class Recorder: ObservableObject {
     }
     
     func startRecording(toOutputFile url: URL) async throws {
-        logger.notice("▶️ startRecording called for: \(url.lastPathComponent)")
-
         deviceManager.isRecordingActive = true
-        
-        Task {
-            _ = await mediaController.muteSystemAudio()
-        }
 
+        Task { 
+            await mediaController.muteSystemAudio()
+        }
         let deviceID = deviceManager.getCurrentDevice()
         if deviceID != 0 {
             do {
@@ -79,20 +74,10 @@ class Recorder: ObservableObject {
             } catch {
                 logger.warning("⚠️ Failed to configure audio session for device \(deviceID), attempting to continue: \(error.localizedDescription)")
             }
-        } else {
-            logger.warning("⚠️ No input device found (deviceID is 0). Attempting to record with default.")
         }
         
         engine = AVAudioEngine()
-
-        guard let engine = self.engine else {
-            logger.error("❌ AVAudioEngine is nil after creation attempt.")
-            await mediaController.unmuteSystemAudio()
-            stopRecording()
-            throw RecorderError.couldNotStartRecording
-        }
-
-        let inputNode = engine.inputNode
+        let inputNode = engine!.inputNode
         let inputFormat = inputNode.outputFormat(forBus: 0)
         
         let whisperSettings: [String: Any] = [
@@ -115,8 +100,7 @@ class Recorder: ObservableObject {
         do {
             file = try AVAudioFile(forWriting: url, settings: whisperSettings)
         } catch {
-            logger.error("❌ Failed to create audio file: \(error.localizedDescription)")
-            await mediaController.unmuteSystemAudio()
+            logger.error("Failed to create audio file: \(error.localizedDescription)")
             stopRecording()
             throw RecorderError.couldNotStartRecording
         }
@@ -181,11 +165,9 @@ class Recorder: ObservableObject {
         }
         
         do {
-            try engine.start()
-            logger.notice("✅ Recording engine started successfully.")
+            try engine!.start()
         } catch {
             logger.error("❌ Failed to start audio engine: \(error.localizedDescription)")
-            await mediaController.unmuteSystemAudio()
             stopRecording()
             throw RecorderError.couldNotStartRecording
         }
@@ -197,10 +179,6 @@ class Recorder: ObservableObject {
             deviceManager.isRecordingActive = false
             engine?.stop()
             engine = nil
-        }
-
-        if wasRunning {
-            logger.notice("⏹️ Recording stopped.")
         }
 
         audioMeter = AudioMeter(averagePower: 0, peakPower: 0)
