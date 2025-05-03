@@ -151,7 +151,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                             // Ensure the base directory exists
                             try? FileManager.default.createDirectory(at: baseAppSupportDirectory, withIntermediateDirectories: true)
                             // Clean up any old temporary file first
-                            try? FileManager.default.removeItem(at: file)
                             self.recordedFile = file
 
                             // --- Start concurrent window config task immediately ---
@@ -357,8 +356,10 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                     clipboardMessage = "Failed to copy to clipboard"
                 }
             }
+            try? FileManager.default.removeItem(at: url)
             await dismissMiniRecorder()
             await cleanupModelResources()
+            
         } catch {
             currentError = .transcriptionFailed
             await cleanupModelResources()
