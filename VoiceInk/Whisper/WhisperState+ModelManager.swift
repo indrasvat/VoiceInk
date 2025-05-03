@@ -288,7 +288,6 @@ extension WhisperState {
     // MARK: - Resource Management
     
     func cleanupModelResources() async {
-        recorder.stopRecording()
         try? await Task.sleep(nanoseconds: 500_000_000)
         
         await whisperContext?.releaseResources()
