@@ -7,8 +7,6 @@ struct TranscriptionCard: View {
     let isSelected: Bool
     let onDelete: () -> Void
     let onToggleSelection: () -> Void
-    @State private var showOriginalCopiedAlert = false
-    @State private var showEnhancedCopiedAlert = false
     
     var body: some View {
         HStack(spacing: 12) {
@@ -45,21 +43,7 @@ struct TranscriptionCard: View {
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.secondary)
                             Spacer()
-                            Button {
-                                copyToClipboard(transcription.text)
-                                showOriginalCopiedAlert = true
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Image(systemName: showOriginalCopiedAlert ? "checkmark" : "doc.on.doc")
-                                    Text(showOriginalCopiedAlert ? "Copied" : "Copy")
-                                }
-                                .foregroundColor(showOriginalCopiedAlert ? .green : .blue)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(6)
-                            }
-                            .buttonStyle(.plain)
+                            AnimatedCopyButton(textToCopy: transcription.text)
                         }
                     }
                     
@@ -84,21 +68,7 @@ struct TranscriptionCard: View {
                                     .foregroundColor(.blue)
                             }
                             Spacer()
-                            Button {
-                                copyToClipboard(enhancedText)
-                                showEnhancedCopiedAlert = true
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Image(systemName: showEnhancedCopiedAlert ? "checkmark" : "doc.on.doc")
-                                    Text(showEnhancedCopiedAlert ? "Copied" : "Copy")
-                                }
-                                .foregroundColor(showEnhancedCopiedAlert ? .green : .blue)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(6)
-                            }
-                            .buttonStyle(.plain)
+                            AnimatedCopyButton(textToCopy: enhancedText)
                         }
                         
                         Text(enhancedText)
@@ -138,16 +108,14 @@ struct TranscriptionCard: View {
         .contextMenu {
             if let enhancedText = transcription.enhancedText {
                 Button {
-                    copyToClipboard(enhancedText)
-                    showEnhancedCopiedAlert = true
+                    let _ = ClipboardManager.copyToClipboard(enhancedText)
                 } label: {
                     Label("Copy Enhanced", systemImage: "doc.on.doc")
                 }
             }
             
             Button {
-                copyToClipboard(transcription.text)
-                showOriginalCopiedAlert = true
+                let _ = ClipboardManager.copyToClipboard(transcription.text)
             } label: {
                 Label("Copy Original", systemImage: "doc.on.doc")
             }
@@ -157,27 +125,6 @@ struct TranscriptionCard: View {
             } label: {
                 Label("Delete", systemImage: "trash")
             }
-        }
-        .onChange(of: showOriginalCopiedAlert) { _, isShowing in
-            if isShowing {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    showOriginalCopiedAlert = false
-                }
-            }
-        }
-        .onChange(of: showEnhancedCopiedAlert) { _, isShowing in
-            if isShowing {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    showEnhancedCopiedAlert = false
-                }
-            }
-        }
-    }
-    
-    private func copyToClipboard(_ text: String) {
-        let success = ClipboardManager.copyToClipboard(text)
-        if !success {
-            print("Failed to copy text to clipboard")
         }
     }
     

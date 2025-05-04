@@ -33,9 +33,13 @@ struct AudioTranscribeView: View {
                         
                         if let enhancedText = transcription.enhancedText {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Enhanced")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                HStack {
+                                    Text("Enhanced")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    AnimatedCopyButton(textToCopy: enhancedText)
+                                }
                                 Text(enhancedText)
                                     .textSelection(.enabled)
                             }
@@ -43,15 +47,28 @@ struct AudioTranscribeView: View {
                             Divider()
                             
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Original")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                HStack {
+                                    Text("Original")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    AnimatedCopyButton(textToCopy: transcription.text)
+                                }
                                 Text(transcription.text)
                                     .textSelection(.enabled)
                             }
                         } else {
-                            Text(transcription.text)
-                                .textSelection(.enabled)
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("Transcription")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    AnimatedCopyButton(textToCopy: transcription.text)
+                                }
+                                Text(transcription.text)
+                                    .textSelection(.enabled)
+                            }
                         }
                         
                         HStack {
