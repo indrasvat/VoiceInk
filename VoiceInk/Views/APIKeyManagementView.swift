@@ -55,6 +55,20 @@ struct APIKeyManagementView: View {
                 }
             }
             
+            // Model Selection - only show for standard providers with available models
+            if !aiService.availableModels.isEmpty && 
+               aiService.selectedProvider != .ollama && 
+               aiService.selectedProvider != .custom {
+                Picker("Model", selection: Binding(
+                    get: { aiService.currentModel },
+                    set: { aiService.selectModel($0) }
+                )) {
+                    ForEach(aiService.availableModels, id: \.self) { model in
+                        Text(model).tag(model)
+                    }
+                }
+            }
+            
             if aiService.selectedProvider == .ollama {
                 // Ollama Configuration
                 VStack(alignment: .leading, spacing: 16) {
@@ -441,103 +455,105 @@ struct APIKeyManagementView: View {
                 .padding()
                 .background(Color.secondary.opacity(0.03))
                 .cornerRadius(12)
-            } else if aiService.isAPIKeyValid {
-                // API Key Display for other providers
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("API Key")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    HStack {
-                        Text(String(repeating: "•", count: 40))
+            } else {
+                // API Key Display for other providers if valid
+                if aiService.isAPIKeyValid {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("API Key")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
+                        HStack {
+                            Text(String(repeating: "•", count: 40))
+                                .font(.system(.body, design: .monospaced))
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                aiService.clearAPIKey()
+                            }) {
+                                Label("Remove Key", systemImage: "trash")
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                } else {
+                    // API Key Input for other providers
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Enter your API Key")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
+                        SecureField("API Key", text: $apiKey)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
                             .font(.system(.body, design: .monospaced))
                         
-                        Spacer()
-                        
-                        Button(action: {
-                            aiService.clearAPIKey()
-                        }) {
-                            Label("Remove Key", systemImage: "trash")
-                                .foregroundColor(.red)
-                        }
-                        .buttonStyle(.borderless)
-                    }
-                }
-            } else {
-                // API Key Input for other providers
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Enter your API Key")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    SecureField("API Key", text: $apiKey)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .font(.system(.body, design: .monospaced))
-                    
-                    HStack {
-                        Button(action: {
-                            isVerifying = true
-                            aiService.saveAPIKey(apiKey) { success in
-                                isVerifying = false
-                                if !success {
-                                    alertMessage = "Invalid API key. Please check and try again."
-                                    showAlert = true
+                        HStack {
+                            Button(action: {
+                                isVerifying = true
+                                aiService.saveAPIKey(apiKey) { success in
+                                    isVerifying = false
+                                    if !success {
+                                        alertMessage = "Invalid API key. Please check and try again."
+                                        showAlert = true
+                                    }
+                                    apiKey = ""
                                 }
-                                apiKey = ""
-                            }
-                        }) {
-                            HStack {
-                                if isVerifying {
-                                    ProgressView()
-                                        .scaleEffect(0.5)
-                                        .frame(width: 16, height: 16)
-                                } else {
-                                    Image(systemName: "checkmark.circle.fill")
+                            }) {
+                                HStack {
+                                    if isVerifying {
+                                        ProgressView()
+                                            .scaleEffect(0.5)
+                                            .frame(width: 16, height: 16)
+                                    } else {
+                                        Image(systemName: "checkmark.circle.fill")
+                                    }
+                                    Text("Verify and Save")
                                 }
-                                Text("Verify and Save")
                             }
-                        }
-                        
-                        Spacer()
-                        
-                        HStack(spacing: 8) {
-                            Text(aiService.selectedProvider == .groq || aiService.selectedProvider == .gemini ? "Free" : "Paid")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.secondary.opacity(0.1))
-                                .cornerRadius(4)
                             
-                            if aiService.selectedProvider != .ollama && aiService.selectedProvider != .custom {
-                                Button {
-                                    let url = switch aiService.selectedProvider {
-                                    case .groq:
-                                        URL(string: "https://console.groq.com/keys")!
-                                    case .openAI:
-                                        URL(string: "https://platform.openai.com/api-keys")!
-                                    case .deepSeek:
-                                        URL(string: "https://platform.deepseek.com/api-keys")!
-                                    case .gemini:
-                                        URL(string: "https://makersuite.google.com/app/apikey")!
-                                    case .anthropic:
-                                        URL(string: "https://console.anthropic.com/settings/keys")!
-                                    case .mistral:
-                                        URL(string: "https://console.mistral.ai/api-keys")!
-                                    case .ollama, .custom:
-                                        URL(string: "")! // This case should never be reached
+                            Spacer()
+                            
+                            HStack(spacing: 8) {
+                                Text(aiService.selectedProvider == .groq || aiService.selectedProvider == .gemini ? "Free" : "Paid")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.secondary.opacity(0.1))
+                                    .cornerRadius(4)
+                                
+                                if aiService.selectedProvider != .ollama && aiService.selectedProvider != .custom {
+                                    Button {
+                                        let url = switch aiService.selectedProvider {
+                                        case .groq:
+                                            URL(string: "https://console.groq.com/keys")!
+                                        case .openAI:
+                                            URL(string: "https://platform.openai.com/api-keys")!
+                                        case .deepSeek:
+                                            URL(string: "https://platform.deepseek.com/api-keys")!
+                                        case .gemini:
+                                            URL(string: "https://makersuite.google.com/app/apikey")!
+                                        case .anthropic:
+                                            URL(string: "https://console.anthropic.com/settings/keys")!
+                                        case .mistral:
+                                            URL(string: "https://console.mistral.ai/api-keys")!
+                                        case .ollama, .custom:
+                                            URL(string: "")! // This case should never be reached
+                                        }
+                                        NSWorkspace.shared.open(url)
+                                    } label: {
+                                        HStack(spacing: 4) {
+                                            Text("Get API Key")
+                                                .foregroundColor(.accentColor)
+                                            Image(systemName: "arrow.up.right")
+                                                .font(.caption)
+                                                .foregroundColor(.accentColor)
+                                        }
                                     }
-                                    NSWorkspace.shared.open(url)
-                                } label: {
-                                    HStack(spacing: 4) {
-                                        Text("Get API Key")
-                                            .foregroundColor(.accentColor)
-                                        Image(systemName: "arrow.up.right")
-                                            .font(.caption)
-                                            .foregroundColor(.accentColor)
-                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                     }

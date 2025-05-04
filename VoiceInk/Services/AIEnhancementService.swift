@@ -17,16 +17,12 @@ class AIEnhancementService: ObservableObject {
     @Published var isEnhancementEnabled: Bool {
         didSet {
             UserDefaults.standard.set(isEnhancementEnabled, forKey: "isAIEnhancementEnabled")
-            // When enhancement is enabled, ensure a prompt is selected
             if isEnhancementEnabled && selectedPromptId == nil {
-                // Select the first prompt (default) if none is selected
                 selectedPromptId = customPrompts.first?.id
             }
             
-            // Cancel any existing capture task
             currentCaptureTask?.cancel()
             
-            // Trigger screen capture when enhancement is enabled and screen capture is on
             if isEnhancementEnabled && useScreenCaptureContext {
                 currentCaptureTask = Task {
                     await captureScreenContext()
@@ -71,7 +67,6 @@ class AIEnhancementService: ObservableObject {
     }
     
     var allPrompts: [CustomPrompt] {
-        // Always include the latest default prompt first, followed by custom prompts
         PredefinedPrompts.createDefaultPrompts() + customPrompts.filter { !$0.isPredefined }
     }
     
@@ -80,7 +75,7 @@ class AIEnhancementService: ObservableObject {
     private var currentCaptureTask: Task<Void, Never>?
     private let maxRetries = 3
     private let baseTimeout: TimeInterval = 4
-    private let rateLimitInterval: TimeInterval = 1.0 // 1 request per second
+    private let rateLimitInterval: TimeInterval = 1.0
     private var lastRequestTime: Date?
     private let modelContext: ModelContext
     
@@ -89,20 +84,11 @@ class AIEnhancementService: ObservableObject {
         self.modelContext = modelContext
         self.screenCaptureService = ScreenCaptureService()
         
-        // Print UserDefaults domain
-        if let domain = Bundle.main.bundleIdentifier {
-            print("⚙️ UserDefaults domain: \(domain)")
-            if let prefsPath = NSSearchPathForDirectoriesInDomains(.libraryDirectory, .userDomainMask, true).first {
-                print("⚙️ Preferences directory: \(prefsPath)/Preferences/\(domain).plist")
-            }
-        }
-        
         self.isEnhancementEnabled = UserDefaults.standard.bool(forKey: "isAIEnhancementEnabled")
         self.useClipboardContext = UserDefaults.standard.bool(forKey: "useClipboardContext")
         self.useScreenCaptureContext = UserDefaults.standard.bool(forKey: "useScreenCaptureContext")
         self.assistantTriggerWord = UserDefaults.standard.string(forKey: "assistantTriggerWord") ?? "hey"
         
-        // Load only custom prompts (non-predefined ones)
         if let savedPromptsData = UserDefaults.standard.data(forKey: "customPrompts"),
            let decodedPrompts = try? JSONDecoder().decode([CustomPrompt].self, from: savedPromptsData) {
             self.customPrompts = decodedPrompts
@@ -110,18 +96,14 @@ class AIEnhancementService: ObservableObject {
             self.customPrompts = []
         }
         
-        // Load selected prompt ID
         if let savedPromptId = UserDefaults.standard.string(forKey: "selectedPromptId") {
             self.selectedPromptId = UUID(uuidString: savedPromptId)
         }
         
-        // Ensure a prompt is selected if enhancement is enabled
         if isEnhancementEnabled && (selectedPromptId == nil || !allPrompts.contains(where: { $0.id == selectedPromptId })) {
-            // Set first prompt (default) as selected
             self.selectedPromptId = allPrompts.first?.id
         }
         
-        // Setup notification observer for API key changes
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleAPIKeyChange),
@@ -137,7 +119,6 @@ class AIEnhancementService: ObservableObject {
     @objc private func handleAPIKeyChange() {
         DispatchQueue.main.async {
             self.objectWillChange.send()
-            // Optionally disable enhancement if API key is cleared
             if !self.aiService.isAPIKeyValid {
                 self.isEnhancementEnabled = false
             }
@@ -159,70 +140,44 @@ class AIEnhancementService: ObservableObject {
     }
     
     private func determineMode(text: String) -> EnhancementMode {
-        // Only use AI assistant mode if text starts with configured trigger word
-        if text.lowercased().hasPrefix(assistantTriggerWord.lowercased()) {
-            return .aiAssistant
-        }
-        return .transcriptionEnhancement
+        text.lowercased().hasPrefix(assistantTriggerWord.lowercased()) ? .aiAssistant : .transcriptionEnhancement
     }
     
     private func getSystemMessage(for mode: EnhancementMode) -> String {
-        // Get clipboard context if enabled and available
         let clipboardContext = if useClipboardContext,
                               let clipboardText = NSPasteboard.general.string(forType: .string),
                               !clipboardText.isEmpty {
-            """
-            
-            Available Clipboard Context: \(clipboardText)
-            """
+            "\n\nAvailable Clipboard Context: \(clipboardText)"
         } else {
             ""
         }
         
-        // Get screen capture context if enabled and available
         let screenCaptureContext = if useScreenCaptureContext,
                                    let capturedText = screenCaptureService.lastCapturedText,
                                    !capturedText.isEmpty {
-            """
-            
-            Active Window Context: \(capturedText)
-            """
+            "\n\nActive Window Context: \(capturedText)"
         } else {
             ""
         }
         
-        // Format all context information together with instructions
         let contextSection = if !clipboardContext.isEmpty || !screenCaptureContext.isEmpty {
-            """
-            
-            \(AIPrompts.contextInstructions)
-            
-            <CONTEXT_INFORMATION>
-            \(clipboardContext)
-            \(screenCaptureContext)
-            </CONTEXT_INFORMATION>
-            """
+            "\n\n\(AIPrompts.contextInstructions)\n\n<CONTEXT_INFORMATION>\(clipboardContext)\(screenCaptureContext)\n</CONTEXT_INFORMATION>"
         } else {
             ""
         }
         
         switch mode {
         case .transcriptionEnhancement:
-            // Check if the active prompt is the Assistant prompt
             if let activePrompt = activePrompt,
                activePrompt.id == PredefinedPrompts.assistantPromptId {
-                // For the Assistant predefined prompt, use the assistant mode prompt directly
-                // This ensures proper system message formatting
                 return AIPrompts.assistantMode + contextSection
             }
             
-            // For all other prompts, use the custom prompt template
             var systemMessage = String(format: AIPrompts.customPromptTemplate, activePrompt!.promptText)
             systemMessage += contextSection
             return systemMessage
 
         case .aiAssistant:
-            // For AI assistant mode, use the assistant mode prompt directly
             return AIPrompts.assistantMode + contextSection
         }
     }
@@ -238,49 +193,37 @@ class AIEnhancementService: ObservableObject {
             throw EnhancementError.emptyText
         }
         
-        // Format transcript with boundary markers
         let formattedText = "<TRANSCRIPT>\n\(text)\n</TRANSCRIPT>"
-        
-        // Determine mode and get system message
         let mode = determineMode(text: text)
         let systemMessage = getSystemMessage(for: mode)
         
-        // Handle Ollama requests differently
         if aiService.selectedProvider == .ollama {
-            logger.notice("📤 Request to Ollama")
-            logger.notice("🤖 System: \(systemMessage, privacy: .public)")
-            logger.notice("📝 Sending: \(formattedText, privacy: .public)")
             do {
                 let result = try await aiService.enhanceWithOllama(text: formattedText, systemPrompt: systemMessage)
-                logger.notice("✅ Ollama enhancement successful")
-                logger.notice("📝 Received: \(result, privacy: .public)")
                 return result
             } catch let error as LocalAIError {
                 switch error {
                 case .serviceUnavailable:
-                    logger.error("🔌 Ollama service unavailable")
                     throw EnhancementError.notConfigured
                 case .modelNotFound:
-                    logger.error("🤖 Ollama model not found")
                     throw EnhancementError.enhancementFailed
                 case .serverError:
-                    logger.error("🔥 Ollama server error")
                     throw EnhancementError.serverError
                 default:
-                    logger.error("❌ Ollama enhancement failed")
                     throw EnhancementError.enhancementFailed
                 }
             }
         }
         
-        // Handle cloud provider requests
-        // Wait for rate limit
         try await waitForRateLimit()
         
-        // Special handling for Gemini and Anthropic
         switch aiService.selectedProvider {
         case .gemini:
-            var urlComponents = URLComponents(string: aiService.selectedProvider.baseURL)!
+            let baseEndpoint = "https://generativelanguage.googleapis.com/v1beta/models"
+            let model = aiService.currentModel
+            let fullURL = "\(baseEndpoint)/\(model):generateContent"
+            
+            var urlComponents = URLComponents(string: fullURL)!
             urlComponents.queryItems = [URLQueryItem(name: "key", value: aiService.apiKey)]
             
             guard let url = urlComponents.url else {
@@ -290,9 +233,7 @@ class AIEnhancementService: ObservableObject {
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-            
-            let timeout = baseTimeout * pow(2.0, Double(retryCount))
-            request.timeoutInterval = timeout
+            request.timeoutInterval = baseTimeout * pow(2.0, Double(retryCount))
             
             let requestBody: [String: Any] = [
                 "contents": [
@@ -311,13 +252,9 @@ class AIEnhancementService: ObservableObject {
             request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
             
             do {
-                logger.notice("📤 Request to Gemini")
-                logger.notice("🤖 System: \(systemMessage, privacy: .public)")
-                logger.notice("📝 Sending: \(formattedText, privacy: .public)")
                 let (data, response) = try await URLSession.shared.data(for: request)
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    logger.error("❌ Invalid Gemini response")
                     throw EnhancementError.invalidResponse
                 }
                 
@@ -330,47 +267,33 @@ class AIEnhancementService: ObservableObject {
                           let parts = content["parts"] as? [[String: Any]],
                           let firstPart = parts.first,
                           let enhancedText = firstPart["text"] as? String else {
-                        logger.error("❌ Failed to parse Gemini response")
                         throw EnhancementError.enhancementFailed
                     }
                     
-                    let result = enhancedText.trimmingCharacters(in: .whitespacesAndNewlines)
-                    logger.notice("✅ Gemini enhancement successful")
-                    logger.notice("📝 Received: \(result, privacy: .public)")
-                    return result
+                    return enhancedText.trimmingCharacters(in: .whitespacesAndNewlines)
                     
                 case 401:
-                    logger.error("🔒 Authentication failed")
                     throw EnhancementError.authenticationFailed
-                    
                 case 429:
-                    logger.error("⏳ Rate limit exceeded")
                     throw EnhancementError.rateLimitExceeded
-                    
                 case 500...599:
-                    logger.error("🔥 Server error (\(httpResponse.statusCode))")
                     throw EnhancementError.serverError
-                    
                 default:
-                    logger.error("❌ Unexpected status (\(httpResponse.statusCode))")
                     throw EnhancementError.apiError
                 }
             } catch let error as EnhancementError {
                 throw error
             } catch {
-                logger.error("❌ Network error: \(error.localizedDescription)")
-                
                 if retryCount < maxRetries {
                     try await Task.sleep(nanoseconds: UInt64(pow(2.0, Double(retryCount)) * 1_000_000_000))
                     return try await makeRequest(text: text, retryCount: retryCount + 1)
                 }
-                
                 throw EnhancementError.networkError
             }
             
         case .anthropic:
             let requestBody: [String: Any] = [
-                "model": aiService.selectedProvider.defaultModel,
+                "model": aiService.currentModel,
                 "max_tokens": 1024,
                 "system": systemMessage,
                 "messages": [
@@ -383,20 +306,13 @@ class AIEnhancementService: ObservableObject {
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
             request.addValue(aiService.apiKey, forHTTPHeaderField: "x-api-key")
             request.addValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-            
-            let timeout = baseTimeout * pow(2.0, Double(retryCount))
-            request.timeoutInterval = timeout
-            
+            request.timeoutInterval = baseTimeout * pow(2.0, Double(retryCount))
             request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
             
             do {
-                logger.notice("📤 Request to Anthropic")
-                logger.notice("🤖 System: \(systemMessage, privacy: .public)")
-                logger.notice("📝 Sending: \(formattedText, privacy: .public)")
                 let (data, response) = try await URLSession.shared.data(for: request)
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    logger.error("❌ Invalid Anthropic response")
                     throw EnhancementError.invalidResponse
                 }
                 
@@ -406,67 +322,45 @@ class AIEnhancementService: ObservableObject {
                           let content = jsonResponse["content"] as? [[String: Any]],
                           let firstContent = content.first,
                           let enhancedText = firstContent["text"] as? String else {
-                        logger.error("❌ Failed to parse Anthropic response")
                         throw EnhancementError.enhancementFailed
                     }
                     
-                    let result = enhancedText.trimmingCharacters(in: .whitespacesAndNewlines)
-                    logger.notice("✅ Anthropic enhancement successful")
-                    logger.notice("📝 Received: \(result, privacy: .public)")
-                    return result
+                    return enhancedText.trimmingCharacters(in: .whitespacesAndNewlines)
                     
                 case 401:
-                    logger.error("🔒 Authentication failed")
                     throw EnhancementError.authenticationFailed
-                    
                 case 429:
-                    logger.error("⏳ Rate limit exceeded")
                     throw EnhancementError.rateLimitExceeded
-                    
                 case 500...599:
-                    logger.error("🔥 Server error (\(httpResponse.statusCode))")
                     throw EnhancementError.serverError
-                    
                 default:
-                    logger.error("❌ Unexpected status (\(httpResponse.statusCode))")
                     throw EnhancementError.apiError
                 }
             } catch let error as EnhancementError {
                 throw error
             } catch {
-                logger.error("❌ Network error: \(error.localizedDescription)")
-                
                 if retryCount < maxRetries {
                     try await Task.sleep(nanoseconds: UInt64(pow(2.0, Double(retryCount)) * 1_000_000_000))
                     return try await makeRequest(text: text, retryCount: retryCount + 1)
                 }
-                
                 throw EnhancementError.networkError
             }
             
         default:
-            // Handle OpenAI compatible providers
             let url = URL(string: aiService.selectedProvider.baseURL)!
             var request = URLRequest(url: url)
             request.httpMethod = "POST"
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
             request.addValue("Bearer \(aiService.apiKey)", forHTTPHeaderField: "Authorization")
-            
-            // Set timeout based on retry count with exponential backoff
-            let timeout = baseTimeout * pow(2.0, Double(retryCount))
-            request.timeoutInterval = timeout
-            
-            logger.debug("Full system message: \(systemMessage)")
+            request.timeoutInterval = baseTimeout * pow(2.0, Double(retryCount))
             
             let messages: [[String: Any]] = [
                 ["role": "system", "content": systemMessage],
                 ["role": "user", "content": formattedText]
             ]
             
-            logger.info("Making request to \(self.aiService.selectedProvider.rawValue) with text length: \(text.count) characters")
-            
             let requestBody: [String: Any] = [
-                "model": aiService.selectedProvider.defaultModel,
+                "model": aiService.currentModel,
                 "messages": messages,
                 "temperature": 0.3,
                 "frequency_penalty": 0.0,
@@ -477,13 +371,9 @@ class AIEnhancementService: ObservableObject {
             request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody)
             
             do {
-                logger.notice("📤 Request to \(self.aiService.selectedProvider.rawValue, privacy: .public)")
-                logger.notice("🤖 System: \(systemMessage, privacy: .public)")
-                logger.notice("📝 Sending: \(formattedText, privacy: .public)")
                 let (data, response) = try await URLSession.shared.data(for: request)
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    logger.error("❌ Invalid response")
                     throw EnhancementError.invalidResponse
                 }
                 
@@ -494,86 +384,64 @@ class AIEnhancementService: ObservableObject {
                           let firstChoice = choices.first,
                           let message = firstChoice["message"] as? [String: Any],
                           let enhancedText = message["content"] as? String else {
-                        logger.error("❌ Failed to parse response")
                         throw EnhancementError.enhancementFailed
                     }
                     
-                    let result = enhancedText.trimmingCharacters(in: .whitespacesAndNewlines)
-                    logger.notice("✅ Enhancement successful")
-                    logger.notice("📝 Received: \(result, privacy: .public)")
-                    return result
+                    return enhancedText.trimmingCharacters(in: .whitespacesAndNewlines)
                     
                 case 401:
-                    logger.error("🔒 Authentication failed")
                     throw EnhancementError.authenticationFailed
-                    
                 case 429:
-                    logger.error("⏳ Rate limit exceeded")
                     throw EnhancementError.rateLimitExceeded
-                    
                 case 500...599:
-                    logger.error("🔥 Server error (\(httpResponse.statusCode))")
                     throw EnhancementError.serverError
-                    
                 default:
-                    logger.error("❌ Unexpected status (\(httpResponse.statusCode))")
                     throw EnhancementError.apiError
                 }
                 
             } catch let error as EnhancementError {
                 throw error
             } catch {
-                logger.error("❌ Network error: \(error.localizedDescription)")
-                
                 if retryCount < maxRetries {
                     try await Task.sleep(nanoseconds: UInt64(pow(2.0, Double(retryCount)) * 1_000_000_000))
                     return try await makeRequest(text: text, retryCount: retryCount + 1)
                 }
-                
                 throw EnhancementError.networkError
             }
         }
     }
     
     func enhance(_ text: String) async throws -> String {
+        logger.notice("🚀 Starting AI enhancement for text (\(text.count) characters)")
         var retryCount = 0
         while retryCount < maxRetries {
             do {
-                return try await makeRequest(text: text, retryCount: retryCount)
+                let result = try await makeRequest(text: text, retryCount: retryCount)
+                logger.notice("✅ AI enhancement completed successfully (\(result.count) characters)")
+                return result
             } catch EnhancementError.rateLimitExceeded where retryCount < maxRetries - 1 {
+                logger.notice("⚠️ Rate limit exceeded, retrying AI enhancement (attempt \(retryCount + 1) of \(self.maxRetries))")
                 retryCount += 1
                 try await Task.sleep(nanoseconds: UInt64(pow(2.0, Double(retryCount)) * 1_000_000_000))
                 continue
             } catch {
+                logger.notice("❌ AI enhancement failed: \(error.localizedDescription)")
                 throw error
             }
         }
+        logger.notice("❌ AI enhancement failed: maximum retries exceeded")
         throw EnhancementError.maxRetriesExceeded
     }
     
-    // Add a new method to capture screen context
     func captureScreenContext() async {
-        // Only check for screen capture context toggle
-        guard useScreenCaptureContext else { 
-            logger.notice("📷 Screen capture context is disabled")
-            return 
-        }
+        guard useScreenCaptureContext else { return }
         
-        logger.notice("📷 Initiating screen capture for context")
-        // Wait for the screen capture to complete and check result
         if let capturedText = await screenCaptureService.captureAndExtractText() {
-            logger.notice("📷 Screen capture successful, got \(capturedText.count, privacy: .public) characters")
-            // Ensure we're on the main thread when updating published properties
             await MainActor.run {
-                // Manually trigger objectWillChange to ensure UI updates
                 self.objectWillChange.send()
             }
-        } else {
-            logger.notice("📷 Screen capture failed or returned empty result")
         }
     }
-    
-    // MARK: - Prompt Management
     
     func addPrompt(title: String, promptText: String, icon: PromptIcon = .documentFill, description: String? = nil) {
         let newPrompt = CustomPrompt(title: title, promptText: promptText, icon: icon, description: description, isPredefined: false)
@@ -584,10 +452,7 @@ class AIEnhancementService: ObservableObject {
     }
     
     func updatePrompt(_ prompt: CustomPrompt) {
-        // Don't allow updates to predefined prompts
-        if prompt.isPredefined {
-            return
-        }
+        if prompt.isPredefined { return }
         
         if let index = customPrompts.firstIndex(where: { $0.id == prompt.id }) {
             customPrompts[index] = prompt
@@ -595,10 +460,7 @@ class AIEnhancementService: ObservableObject {
     }
     
     func deletePrompt(_ prompt: CustomPrompt) {
-        // Don't allow deletion of predefined prompts
-        if prompt.isPredefined {
-            return
-        }
+        if prompt.isPredefined { return }
         
         customPrompts.removeAll { $0.id == prompt.id }
         if selectedPromptId == prompt.id {
