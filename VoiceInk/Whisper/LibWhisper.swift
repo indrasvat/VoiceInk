@@ -100,7 +100,10 @@ actor WhisperContext {
             transcription += String(cString: whisper_full_get_segment_text(context, i))
         }
         // Apply hallucination filtering
-        return WhisperHallucinationFilter.filter(transcription)
+        let filteredTranscription = WhisperHallucinationFilter.filter(transcription)
+
+        // Always apply text formatting
+        return WhisperTextFormatter.format(filteredTranscription)
     }
 
     static func createContext(path: String) async throws -> WhisperContext {
