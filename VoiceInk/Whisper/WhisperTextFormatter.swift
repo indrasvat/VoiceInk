@@ -20,6 +20,20 @@ struct WhisperTextFormatter {
             )
         }
         
+        // Handle single-word variants
+        let singleWordPatterns = [
+            (pattern: "\\b(newline)\\b", replacement: "new line"),
+            (pattern: "\\b(newparagraph)\\b", replacement: "new paragraph")
+        ]
+        
+        for (pattern, replacement) in singleWordPatterns {
+            formattedText = formattedText.replacingOccurrences(
+                of: pattern,
+                with: replacement,
+                options: [.regularExpression, .caseInsensitive]
+            )
+        }
+        
         // Then handle the new line/paragraph commands with any combination of spaces and punctuation
         let patterns = [
             // Handle "new paragraph" with any combination of spaces and punctuation
