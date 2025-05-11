@@ -4,22 +4,6 @@ struct WhisperTextFormatter {
     static func format(_ text: String) -> String {
         var formattedText = text
         
-        // First, replace commas with periods before new line/paragraph commands
-        let commaPatterns = [
-            // Replace comma before new paragraph
-            (pattern: ",\\s*new\\s+paragraph", replacement: ". new paragraph"),
-            // Replace comma before new line
-            (pattern: ",\\s*new\\s+line", replacement: ". new line")
-        ]
-        
-        for (pattern, replacement) in commaPatterns {
-            formattedText = formattedText.replacingOccurrences(
-                of: pattern,
-                with: replacement,
-                options: [.regularExpression, .caseInsensitive]
-            )
-        }
-        
         // Handle single-word variants
         let singleWordPatterns = [
             (pattern: "\\b(newline)\\b", replacement: "new line"),
@@ -27,6 +11,19 @@ struct WhisperTextFormatter {
         ]
         
         for (pattern, replacement) in singleWordPatterns {
+            formattedText = formattedText.replacingOccurrences(
+                of: pattern,
+                with: replacement,
+                options: [.regularExpression, .caseInsensitive]
+            )
+        }
+
+        // Insert a period before 'new line' or 'new paragraph' if not preceded by punctuation
+        let punctuationInsertPatterns = [
+            (pattern: "(?<![.!?,\n\r])\\s*(new\\s+line)", replacement: ". new line"),
+            (pattern: "(?<![.!?,\n\r])\\s*(new\\s+paragraph)", replacement: ". new paragraph")
+        ]
+        for (pattern, replacement) in punctuationInsertPatterns {
             formattedText = formattedText.replacingOccurrences(
                 of: pattern,
                 with: replacement,
