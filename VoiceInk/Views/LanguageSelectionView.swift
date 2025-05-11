@@ -71,7 +71,9 @@ struct LanguageSelectionView: View {
                         Picker("Select Language", selection: $selectedLanguage) {
                             ForEach(
                                 predefinedModel.supportedLanguages.sorted(by: {
-                                    $0.value < $1.value
+                                    if $0.key == "auto" { return true }
+                                    if $1.key == "auto" { return false }
+                                    return $0.value < $1.value
                                 }), id: \.key
                             ) { key, value in
                                 Text(value).tag(key)
@@ -132,7 +134,11 @@ struct LanguageSelectionView: View {
             if isMultilingualModel() {
                 Menu {
                     ForEach(
-                        getCurrentModelLanguages().sorted(by: { $0.value < $1.value }), id: \.key
+                        getCurrentModelLanguages().sorted(by: {
+                            if $0.key == "auto" { return true }
+                            if $1.key == "auto" { return false }
+                            return $0.value < $1.value
+                        }), id: \.key
                     ) { key, value in
                         Button {
                             updateLanguage(key)
