@@ -288,7 +288,10 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             let actualDuration = CMTimeGetSeconds(audioAsset.duration)
             logger.notice("📊 Audio file duration: \(actualDuration) seconds")
             
-            await whisperContext.setPrompt(whisperPrompt.transcriptionPrompt)
+            // Ensure we're using the most recent prompt from UserDefaults
+            let currentPrompt = UserDefaults.standard.string(forKey: "TranscriptionPrompt") ?? whisperPrompt.transcriptionPrompt
+            await whisperContext.setPrompt(currentPrompt)
+            
             if shouldCancelRecording { return }
             await whisperContext.fullTranscribe(samples: data)
             if shouldCancelRecording { return }

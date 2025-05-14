@@ -53,7 +53,6 @@ actor WhisperContext {
             logger.notice("🌐 Using auto language detection")
         }
         
-        // Use prompt for all languages
         if prompt != nil {
             promptCString = Array(prompt!.utf8CString)
             params.initial_prompt = promptCString?.withUnsafeBufferPointer { ptr in
@@ -64,7 +63,7 @@ actor WhisperContext {
             promptCString = nil
             params.initial_prompt = nil
         }
-        // Adapted from whisper.objc
+        
         params.print_realtime   = true
         params.print_progress   = false
         params.print_timestamps = true
