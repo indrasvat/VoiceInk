@@ -12,6 +12,12 @@ struct PromptCustomizationView: View {
                 Text("Output Format")
                     .font(.headline)
                 
+                InfoTip(
+                    title: "Output Format Guide",
+                    message: "Unlike GPT, Whisper follows the style of your prompt rather than instructions. Use examples of your desired output format instead of commands.",
+                    learnMoreURL: "https://cookbook.openai.com/examples/whisper_prompting_guide#comparison-with-gpt-prompting"
+                )
+                
                 Spacer()
                 
                 Button(action: {
