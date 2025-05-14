@@ -134,20 +134,23 @@ struct EnhancementSettingsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
-                // Video CTA Section
-                VideoCTAView(
-                    url: "https://dub.sh/promptmode",
-                    subtitle: "Learn how to use AI enhancement modes"
-                )
-                
                 // Main Settings Sections
                 VStack(spacing: 24) {
                     // Enable/Disable Toggle Section
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Enable Enhancement")
-                                    .font(.headline)
+                                HStack {
+                                    Text("Enable Enhancement")
+                                        .font(.headline)
+                                    
+                                    InfoTip(
+                                        title: "AI Enhancement",
+                                        message: "AI enhancement lets you transform transcriptions with different modes like summarize, rewrite, or translate. Configure app-specific settings in Power Mode.",
+                                        learnMoreURL: "https://www.youtube.com/@tryvoiceink/videos"
+                                    )
+                                }
+                                
                                 Text("Turn on AI-powered enhancement features")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
