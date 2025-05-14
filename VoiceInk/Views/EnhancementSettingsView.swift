@@ -146,7 +146,7 @@ struct EnhancementSettingsView: View {
                                     
                                     InfoTip(
                                         title: "AI Enhancement",
-                                        message: "AI enhancement lets you transform transcriptions with different modes like summarize, rewrite, or translate. Configure app-specific settings in Power Mode.",
+                                        message: "AI enhancement lets you pass the transcribed audio through LLMS to post-process using different prompts suitable for different use cases like e-mails, summary, writing, etc.",
                                         learnMoreURL: "https://www.youtube.com/@tryvoiceink/videos"
                                     )
                                 }
