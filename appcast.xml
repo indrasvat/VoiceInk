@@ -3,21 +3,21 @@
     <channel>
         <title>VoiceInk Releases</title>
         <item>
-            <title>1.27</title>
-            <pubDate>Sat, 12 May 2025 12:00:00 +0545</pubDate>
-            <sparkle:version>127</sparkle:version>
-            <sparkle:shortVersionString>1.27</sparkle:shortVersionString>
+            <title>1.28</title>
+            <pubDate>Sat, 15 May 2025 12:00:00 +0545</pubDate>
+            <sparkle:version>128</sparkle:version>
+            <sparkle:shortVersionString>1.28</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
-                    <h3>What's New in Version 1.27 🚀⚡</h3>
+                    <h3>What's New in Version 1.28 🚀⚡</h3>
                             <ul>
-                              <li>🧾 Added line breaks and paragraph support for transcribed audio.</li>
-                              <li>🔇 Respects system-muted status for audio mute functionality.</li>
-                              <li>💡 Improved the Default and Assistant prompt.</li>
-                              <li>🛠️ Minor bugs fixes & Improvements</li>
+                              <li>🔄 Added option to specify output format for the transcription(useful for languages written in different styles like simplified & traditional language</li>
+                              <li>🐞 Fixed Dock Icon reappearing issue</li>
+                              <li>🖼️ Updated the app icon</li>
+                              <li>✨ Minor improvements</li>
                             </ul>
             ]]></description>
-           <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v1.27/VoiceInk.dmg" length="8032839" type="application/octet-stream" sparkle:edSignature="N9V4CEE4g3DvMrsBDHDHsBI/8siFmNALeOeO85l3nJLYfymFycK9sWk98losuxaeYZx6KxJg7N29lkWKyEFoAQ=="/>
+           <enclosure url="https://github.com/Beingpax/VoiceInk/releases/download/v1.28/VoiceInk.dmg" length="7287500" type="application/octet-stream" sparkle:edSignature="1sVoDx6izVV2MuDI4sPRPlqlcEyK3h9HJQtkuK2vJPWYudlD3UX/yKrVoUuNR88/zOqya1Xl7Q4CY64wnsGgAg=="/>
         </item>
     </channel>
 </rss>
