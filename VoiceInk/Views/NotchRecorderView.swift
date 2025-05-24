@@ -5,7 +5,8 @@ struct NotchRecorderView: View {
     @ObservedObject var recorder: Recorder
     @EnvironmentObject var windowManager: NotchWindowManager
     @State private var isHovering = false
-    @State private var showPromptPopover = false
+    @State private var showPowerModePopover = false
+    @ObservedObject private var powerModeManager = PowerModeManager.shared
     
     private var menuBarHeight: CGFloat {
         if let screen = NSScreen.main {
@@ -46,18 +47,9 @@ struct NotchRecorderView: View {
                         }
                         .frame(width: 22)
                         
-                        // AI Enhancement Toggle
-                        if let enhancementService = whisperState.getEnhancementService() {
-                            NotchToggleButton(
-                                isEnabled: enhancementService.isEnhancementEnabled,
-                                icon: "sparkles",
-                                color: .blue
-                            ) {
-                                enhancementService.isEnhancementEnabled.toggle()
-                            }
+                        // Empty space for future use
+                        Spacer()
                             .frame(width: 22)
-                            .disabled(!enhancementService.isConfigured)
-                        }
                     }
                     .frame(width: 44) // Fixed width for controls
                     .padding(.leading, 16)
@@ -70,23 +62,7 @@ struct NotchRecorderView: View {
                     
                     // Right side group with fixed width
                     HStack(spacing: 8) {
-                        // Custom Prompt Toggle and Selector
-                        if let enhancementService = whisperState.getEnhancementService() {
-                            NotchToggleButton(
-                                isEnabled: enhancementService.isEnhancementEnabled,
-                                icon: enhancementService.activePrompt?.icon.rawValue ?? "text.badge.checkmark",
-                                color: .green
-                            ) {
-                                showPromptPopover.toggle()
-                            }
-                            .frame(width: 22)
-                            .disabled(!enhancementService.isEnhancementEnabled)
-                            .popover(isPresented: $showPromptPopover, arrowEdge: .bottom) {
-                                NotchPromptPopover(enhancementService: enhancementService)
-                            }
-                        }
-                        
-                        // Visualizer
+                        // Visualizer - moved to first position
                         Group {
                             if whisperState.isProcessing {
                                 NotchStaticVisualizer(color: .white)
@@ -99,6 +75,19 @@ struct NotchRecorderView: View {
                             }
                         }
                         .frame(width: 22)
+                        
+                        // Power Mode Button - moved to second position
+                        NotchToggleButton(
+                            isEnabled: powerModeManager.isPowerModeEnabled,
+                            icon: powerModeManager.currentActiveConfiguration.emoji,
+                            color: .orange
+                        ) {
+                            showPowerModePopover.toggle()
+                        }
+                        .frame(width: 22)
+                        .popover(isPresented: $showPowerModePopover, arrowEdge: .bottom) {
+                            PowerModePopover()
+                        }
                     }
                     .frame(width: 44) // Fixed width for controls
                     .padding(.trailing, 16)
@@ -195,15 +184,9 @@ struct NotchToggleButton: View {
     
     var body: some View {
         Button(action: action) {
-            ZStack {
-                Circle()
-                    .fill(isEnabled ? color.opacity(0.2) : Color(red: 0.4, green: 0.4, blue: 0.45).opacity(0.2))
-                    .frame(width: 20, height: 20)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(isEnabled ? color : .white.opacity(0.6))
-            }
+            Text(icon)
+                .font(.system(size: 12))
+                .foregroundColor(isEnabled ? .white : .white.opacity(0.6))
         }
         .buttonStyle(PlainButtonStyle())
     }

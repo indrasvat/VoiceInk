@@ -76,10 +76,12 @@ class PowerModeManager: ObservableObject {
     @Published var configurations: [PowerModeConfig] = []
     @Published var defaultConfig: PowerModeConfig
     @Published var isPowerModeEnabled: Bool
+    @Published var activeConfiguration: PowerModeConfig?
     
     private let configKey = "powerModeConfigurationsV2"
     private let defaultConfigKey = "defaultPowerModeConfigV2"
     private let powerModeEnabledKey = "isPowerModeEnabled"
+    private let activeConfigIdKey = "activeConfigurationId"
     
     private init() {
         // Load power mode enabled state or default to false if not set
@@ -111,6 +113,20 @@ class PowerModeManager: ObservableObject {
             saveDefaultConfig()
         }
         loadConfigurations()
+        
+        // Set the active configuration, either from saved ID or default to the default config
+        if let activeConfigIdString = UserDefaults.standard.string(forKey: activeConfigIdKey),
+           let activeConfigId = UUID(uuidString: activeConfigIdString) {
+            if let savedConfig = configurations.first(where: { $0.id == activeConfigId }) {
+                activeConfiguration = savedConfig
+            } else if activeConfigId == defaultConfig.id {
+                activeConfiguration = defaultConfig
+            } else {
+                activeConfiguration = defaultConfig
+            }
+        } else {
+            activeConfiguration = defaultConfig
+        }
     }
     
     private func loadConfigurations() {
@@ -236,5 +252,17 @@ class PowerModeManager: ObservableObject {
     // Save power mode enabled state
     func savePowerModeEnabled() {
         UserDefaults.standard.set(isPowerModeEnabled, forKey: powerModeEnabledKey)
+    }
+    
+    // Set active configuration
+    func setActiveConfiguration(_ config: PowerModeConfig) {
+        activeConfiguration = config
+        UserDefaults.standard.set(config.id.uuidString, forKey: activeConfigIdKey)
+        self.objectWillChange.send()
+    }
+    
+    // Get current active configuration
+    var currentActiveConfiguration: PowerModeConfig {
+        return activeConfiguration ?? defaultConfig
     }
 } 

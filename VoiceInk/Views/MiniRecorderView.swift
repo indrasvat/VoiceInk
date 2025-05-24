@@ -4,7 +4,8 @@ struct MiniRecorderView: View {
     @ObservedObject var whisperState: WhisperState
     @ObservedObject var recorder: Recorder
     @EnvironmentObject var windowManager: MiniWindowManager
-    @State private var showPromptPopover = false
+    @State private var showPowerModePopover = false
+    @ObservedObject private var powerModeManager = PowerModeManager.shared
     
     var body: some View {
         Group {
@@ -49,36 +50,7 @@ struct MiniRecorderView: View {
                             .frame(width: 18)
                             .padding(.leading, -4)
                             
-                            // AI Enhancement Toggle
-                            if let enhancementService = whisperState.getEnhancementService() {
-                                NotchToggleButton(
-                                    isEnabled: enhancementService.isEnhancementEnabled,
-                                    icon: "sparkles",
-                                    color: .blue
-                                ) {
-                                    enhancementService.isEnhancementEnabled.toggle()
-                                }
-                                .frame(width: 18)
-                                .disabled(!enhancementService.isConfigured)
-                            }
-                            
-                            // Custom Prompt Toggle and Selector
-                            if let enhancementService = whisperState.getEnhancementService() {
-                                NotchToggleButton(
-                                    isEnabled: enhancementService.isEnhancementEnabled,
-                                    icon: enhancementService.activePrompt?.icon.rawValue ?? "text.badge.checkmark",
-                                    color: .green
-                                ) {
-                                    showPromptPopover.toggle()
-                                }
-                                .frame(width: 18)
-                                .disabled(!enhancementService.isEnhancementEnabled)
-                                .popover(isPresented: $showPromptPopover, arrowEdge: .bottom) {
-                                    NotchPromptPopover(enhancementService: enhancementService)
-                                }
-                            }
-                            
-                            // Visualizer
+                            // Visualizer - moved to middle position
                             Group {
                                 if whisperState.isProcessing {
                                     NotchStaticVisualizer(color: .white)
@@ -91,7 +63,24 @@ struct MiniRecorderView: View {
                                 }
                             }
                             .frame(width: 18)
+                            
+                            // Empty space for future use
+                            Spacer()
+                                .frame(width: 18)
+                            
+                            // Power Mode Button - moved to last position
+                            NotchToggleButton(
+                                isEnabled: powerModeManager.isPowerModeEnabled,
+                                icon: powerModeManager.currentActiveConfiguration.emoji,
+                                color: .orange
+                            ) {
+                                showPowerModePopover.toggle()
+                            }
+                            .frame(width: 18)
                             .padding(.trailing, -4)
+                            .popover(isPresented: $showPowerModePopover, arrowEdge: .bottom) {
+                                PowerModePopover()
+                            }
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 8)
