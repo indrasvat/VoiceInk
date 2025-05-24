@@ -165,62 +165,16 @@ struct APIKeyManagementView: View {
                             .background(Color.orange.opacity(0.1))
                             .cornerRadius(8)
                         } else {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
+                            Picker("", selection: $selectedOllamaModel) {
                                 ForEach(ollamaModels) { model in
-                                        VStack(alignment: .leading, spacing: 6) {
-                                            // Model Name and Status
-                                            HStack {
-                                                Text(model.name)
-                                                    .font(.subheadline)
-                                                    .bold()
-                                                
-                                                if model.name == selectedOllamaModel {
-                                                    Image(systemName: "checkmark.circle.fill")
-                                                        .foregroundColor(.green)
-                                                }
-                                            }
-                                            
-                                            // Model Details
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                // Parameters
-                                                HStack(spacing: 4) {
-                                                    Image(systemName: "cpu.fill")
-                                                        .font(.caption2)
-                                                    Text(model.details.parameter_size)
-                                                        .font(.caption2)
-                                                }
-                                                .foregroundColor(.secondary)
-                                                
-                                                // Size
-                                                HStack(spacing: 4) {
-                                                    Image(systemName: "externaldrive.fill")
-                                                        .font(.caption2)
-                                                    Text(formatSize(model.size))
-                                                        .font(.caption2)
-                                                }
-                                                .foregroundColor(.secondary)
-                                            }
-                                        }
-                                        .padding(12)
-                                        .frame(minWidth: 140)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .fill(model.name == selectedOllamaModel ? Color.accentColor.opacity(0.1) : Color.secondary.opacity(0.05))
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 8)
-                                                        .stroke(model.name == selectedOllamaModel ? Color.accentColor : Color.clear, lineWidth: 1)
-                                                )
-                                        )
-                                        .onTapGesture {
-                                            selectedOllamaModel = model.name
-                                            aiService.updateSelectedOllamaModel(model.name)
-                                        }
-                                    }
+                                    Text(model.name).tag(model.name)
                                 }
-                                .padding(.horizontal, 4)  // Add padding for the first and last items
-                                .padding(.vertical, 4)
                             }
+                            .onChange(of: selectedOllamaModel) { oldValue, newValue in
+                                aiService.updateSelectedOllamaModel(newValue)
+                            }
+                            .labelsHidden()
+                            .frame(maxWidth: .infinity)
                         }
                         
                         // Refresh Button
