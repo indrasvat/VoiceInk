@@ -78,6 +78,7 @@ struct VoiceInkApp: App {
         // Configure ActiveWindowService with enhancementService
         let activeWindowService = ActiveWindowService.shared
         activeWindowService.configure(with: enhancementService)
+        activeWindowService.configureWhisperState(whisperState)
         _activeWindowService = StateObject(wrappedValue: activeWindowService)
     }
     

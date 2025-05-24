@@ -125,6 +125,10 @@ class AIEnhancementService: ObservableObject {
         }
     }
     
+    func getAIService() -> AIService? {
+        return aiService
+    }
+    
     var isConfigured: Bool {
         aiService.isAPIKeyValid
     }

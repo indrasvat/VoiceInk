@@ -153,9 +153,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                             // Clean up any old temporary file first
                             self.recordedFile = file
 
-                            // --- Start concurrent window config task immediately ---
-                            async let windowConfigTask: () = ActiveWindowService.shared.applyConfigurationForCurrentApp()
-
                             try await self.recorder.startRecording(toOutputFile: file)
                             self.logger.notice("✅ Audio engine started successfully.")
 
@@ -163,26 +160,22 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                                 self.isRecording = true
                                 self.isVisualizerActive = true
                             }
+                            
+                            await ActiveWindowService.shared.applyConfigurationForCurrentApp()
 
-                            Task {
-                                if let currentModel = await self.currentModel, await self.whisperContext == nil {
-                                    do {
-                                        try await self.loadModel(currentModel)
-                                    } catch {
-                                        self.logger.error("❌ Model loading failed: \(error.localizedDescription)")
-                                    }
+                            if let currentModel = await self.currentModel, await self.whisperContext == nil {
+                                do {
+                                    try await self.loadModel(currentModel)
+                                } catch {
+                                    self.logger.error("❌ Model loading failed: \(error.localizedDescription)")
                                 }
                             }
 
-                            Task {
-                                if let enhancementService = self.enhancementService,
-                                   enhancementService.isEnhancementEnabled &&
-                                   enhancementService.useScreenCaptureContext {
-                                    await enhancementService.captureScreenContext()
-                                }
+                            if let enhancementService = self.enhancementService,
+                               enhancementService.isEnhancementEnabled &&
+                               enhancementService.useScreenCaptureContext {
+                                await enhancementService.captureScreenContext()
                             }
-
-                            await windowConfigTask
 
                         } catch {
                             self.logger.error("❌ Failed to start recording: \(error.localizedDescription)")

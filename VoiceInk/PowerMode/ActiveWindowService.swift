@@ -7,6 +7,7 @@ class ActiveWindowService: ObservableObject {
     @Published var currentApplication: NSRunningApplication?
     private var enhancementService: AIEnhancementService?
     private let browserURLService = BrowserURLService.shared
+    private var whisperState: WhisperState?
     
     private let logger = Logger(
         subsystem: "com.prakashjoshipax.VoiceInk",
@@ -17,6 +18,10 @@ class ActiveWindowService: ObservableObject {
     
     func configure(with enhancementService: AIEnhancementService) {
         self.enhancementService = enhancementService
+    }
+    
+    func configureWhisperState(_ whisperState: WhisperState) {
+        self.whisperState = whisperState
     }
     
     func applyConfigurationForCurrentApp() async {
@@ -45,12 +50,10 @@ class ActiveWindowService: ObservableObject {
                 logger.debug("📍 Successfully got URL: \(currentURL)")
                 
                 // Check for URL-specific configuration
-                if let (config, urlConfig) = PowerModeManager.shared.getConfigurationForURL(currentURL) {
-                    logger.debug("⚙️ Found URL Configuration: \(config.appName) - URL: \(urlConfig.url)")
+                if let config = PowerModeManager.shared.getConfigurationForURL(currentURL) {
+                    logger.debug("⚙️ Found URL Configuration: \(config.name) for URL: \(currentURL)")
                     // Apply URL-specific configuration
-                    var updatedConfig = config
-                    updatedConfig.selectedPrompt = urlConfig.promptId
-                    await applyConfiguration(updatedConfig)
+                    await applyConfiguration(config)
                     return
                 } else {
                     logger.debug("📝 No URL configuration found for: \(currentURL)")
@@ -61,8 +64,8 @@ class ActiveWindowService: ObservableObject {
         }
         
         // Get configuration for the current app or use default if none exists
-        let config = PowerModeManager.shared.getConfiguration(for: bundleIdentifier) ?? PowerModeManager.shared.defaultConfig
-        print("⚡️ Using Configuration: \(config.appName) (AI Enhancement: \(config.isAIEnhancementEnabled ? "Enabled" : "Disabled"))")
+        let config = PowerModeManager.shared.getConfigurationForApp(bundleIdentifier) ?? PowerModeManager.shared.defaultConfig
+        print("⚡️ Using Configuration: \(config.name) (AI Enhancement: \(config.isAIEnhancementEnabled ? "Enabled" : "Disabled"))")
         await applyConfiguration(config)
     }
     
@@ -74,12 +77,13 @@ class ActiveWindowService: ObservableObject {
             if PowerModeManager.shared.isPowerModeEnabled {
                 // Apply AI enhancement settings
                 enhancementService.isEnhancementEnabled = config.isAIEnhancementEnabled
+                enhancementService.useScreenCaptureContext = config.useScreenCapture
                 
                 // Handle prompt selection
                 if config.isAIEnhancementEnabled {
                     if let promptId = config.selectedPrompt,
                        let uuid = UUID(uuidString: promptId) {
-                        print("🎯 Applied Prompt: \(enhancementService.allPrompts.first(where: { $0.id == uuid })?.title ?? "Unknown")")
+                        print("🎯 Applied Prompt: \(promptId)")
                         enhancementService.selectedPromptId = uuid
                     } else {
                         // Auto-select first prompt if none is selected and AI is enabled
@@ -89,10 +93,51 @@ class ActiveWindowService: ObservableObject {
                         }
                     }
                 }
+                
+                // Apply AI provider and model if specified
+                if config.isAIEnhancementEnabled, 
+                   let aiService = enhancementService.getAIService() {
+                    
+                    // Apply AI provider if specified, otherwise use current global provider
+                    if let providerName = config.selectedAIProvider,
+                       let provider = AIProvider(rawValue: providerName) {
+                        print("🤖 Applied AI Provider: \(provider.rawValue)")
+                        aiService.selectedProvider = provider
+                        
+                        // Apply model if specified, otherwise use default model
+                        if let model = config.selectedAIModel,
+                           !model.isEmpty {
+                            print("🧠 Applied AI Model: \(model)")
+                            aiService.selectModel(model)
+                        } else {
+                            print("🧠 Using default model for provider: \(aiService.currentModel)")
+                        }
+                    } else {
+                        print("🤖 Using global AI Provider: \(aiService.selectedProvider.rawValue)")
+                    }
+                }
+                
+                // Apply language selection if specified
+                if let language = config.selectedLanguage {
+                    print("🌐 Applied Language: \(language)")
+                    UserDefaults.standard.set(language, forKey: "SelectedLanguage")
+                    // Notify that language has changed to update the prompt
+                    NotificationCenter.default.post(name: .languageDidChange, object: nil)
+                }
             } else {
                 print("🔌 Power Mode is disabled globally - skipping configuration application")
                 return
             }
+        }
+        
+        // Apply Whisper model selection - do this outside of MainActor to allow async operations
+        if PowerModeManager.shared.isPowerModeEnabled,
+           let whisperState = self.whisperState,
+           let modelName = config.selectedWhisperModel,
+           let selectedModel = await whisperState.availableModels.first(where: { $0.name == modelName }) {
+            print("🎤 Applied Whisper Model: \(selectedModel.name)")
+            // Apply the model selection immediately
+            await whisperState.setDefaultModel(selectedModel)
         }
     }
 } 
