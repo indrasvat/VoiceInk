@@ -166,19 +166,21 @@ struct PromptEditorView: View {
                     .padding(.horizontal)
                     
                     if case .add = mode {
-                        // Templates Section with improved styling
-                        VStack(alignment: .leading, spacing: 12) {
+                        // Templates Section with modern styling
+                        VStack(alignment: .leading, spacing: 16) {
                             Text("Start with a Predefined Template")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
                             
                             let columns = [
-                                GridItem(.adaptive(minimum: 150, maximum: 200), spacing: 16)
+                                GridItem(.flexible(), spacing: 16),
+                                GridItem(.flexible(), spacing: 16)
                             ]
                             
                             LazyVGrid(columns: columns, spacing: 16) {
                                 ForEach(PromptTemplates.all) { template in
-                                    TemplateButton(prompt: template) {
+                                    CleanTemplateButton(prompt: template) {
                                         title = template.title
                                         promptText = template.promptText
                                         selectedIcon = template.icon
@@ -186,15 +188,20 @@ struct PromptEditorView: View {
                                     }
                                 }
                             }
-                            .padding(.vertical, 4)
                         }
+                        .padding(.horizontal)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(.windowBackgroundColor).opacity(0.6))
+                        )
                         .padding(.horizontal)
                     }
                 }
                 .padding(.vertical, 20)
             }
         }
-        .frame(minWidth: 600, minHeight: 500)
+        .frame(minWidth: 700, minHeight: 500)
     }
     
     private func save() {
@@ -220,7 +227,56 @@ struct PromptEditorView: View {
     }
 }
 
-// Template button with modern styling
+// Clean template button with minimal styling
+struct CleanTemplateButton: View {
+    let prompt: TemplatePrompt
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .top, spacing: 12) {
+                // Clean icon design
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.accentColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: prompt.icon.rawValue)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.accentColor)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(prompt.title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    Text(prompt.description)
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                
+                Spacer(minLength: 0)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.controlBackgroundColor))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// Keep the old TemplateButton for backward compatibility if needed elsewhere
 struct TemplateButton: View {
     let prompt: TemplatePrompt
     let action: () -> Void
