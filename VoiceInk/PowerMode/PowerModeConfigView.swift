@@ -37,6 +37,10 @@ struct ConfigurationView: View {
     // New state for screen capture toggle
     @State private var useScreenCapture = false
     
+    // State for prompt editing (similar to EnhancementSettingsView)
+    @State private var isEditingPrompt = false
+    @State private var selectedPromptForEdit: CustomPrompt?
+    
     // Whisper state for model selection
     @EnvironmentObject private var whisperState: WhisperState
     
@@ -553,20 +557,47 @@ struct ConfigurationView: View {
                             }
                         
                             
-                            // Prompt selection grid
-                            let columns = [
-                                GridItem(.adaptive(minimum: 80, maximum: 100), spacing: 20)
-                            ]
-                            
-                            LazyVGrid(columns: columns, spacing: 16) {
-                                ForEach(enhancementService.allPrompts) { prompt in
-                                    prompt.promptIcon(
-                                        isSelected: selectedPromptId == prompt.id,
-                                        onTap: { selectedPromptId = prompt.id }
-                                    )
+                            // Enhancement Modes Section (reused from EnhancementSettingsView)
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Enhancement Modes")
+                                        .font(.subheadline)
+                                        .foregroundColor(.primary)
+                                    Spacer()
+                                    Button(action: { isEditingPrompt = true }) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .symbolRenderingMode(.hierarchical)
+                                            .font(.system(size: 26, weight: .medium))
+                                            .foregroundStyle(Color.accentColor)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .contentShape(Circle())
+                                    .help("Add new mode")
+                                }
+                                
+                                if enhancementService.allPrompts.isEmpty {
+                                    Text("No modes available")
+                                        .foregroundColor(.secondary)
+                                        .font(.caption)
+                                } else {
+                                    let columns = [
+                                        GridItem(.adaptive(minimum: 80, maximum: 100), spacing: 36)
+                                    ]
+                                    
+                                    LazyVGrid(columns: columns, spacing: 24) {
+                                        ForEach(enhancementService.allPrompts) { prompt in
+                                            prompt.promptIcon(
+                                                isSelected: selectedPromptId == prompt.id,
+                                                onTap: { selectedPromptId = prompt.id },
+                                                onEdit: { selectedPromptForEdit = $0 },
+                                                onDelete: { enhancementService.deletePrompt($0) }
+                                            )
+                                        }
+                                    }
+                                    .padding(.vertical, 12)
+                                    .padding(.horizontal, 16)
                                 }
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
 
                             Divider()
                             
@@ -603,6 +634,12 @@ struct ConfigurationView: View {
                 searchText: $searchText,
                 onDismiss: { isShowingAppPicker = false }
             )
+        }
+        .sheet(isPresented: $isEditingPrompt) {
+            PromptEditorView(mode: .add)
+        }
+        .sheet(item: $selectedPromptForEdit) { prompt in
+            PromptEditorView(mode: .edit(prompt))
         }
         .powerModeValidationAlert(errors: validationErrors, isPresented: $showValidationAlert)
         .navigationTitle("") // Explicitly set an empty title for this view
