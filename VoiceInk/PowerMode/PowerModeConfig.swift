@@ -265,4 +265,9 @@ class PowerModeManager: ObservableObject {
     var currentActiveConfiguration: PowerModeConfig {
         return activeConfiguration ?? defaultConfig
     }
+    
+    // Get all available configurations in order (default first, then custom configurations)
+    func getAllAvailableConfigurations() -> [PowerModeConfig] {
+        return [defaultConfig] + configurations
+    }
 } 
