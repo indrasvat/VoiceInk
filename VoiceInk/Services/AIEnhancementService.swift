@@ -201,7 +201,7 @@ class AIEnhancementService: ObservableObject {
         let mode = determineMode(text: text)
         let systemMessage = getSystemMessage(for: mode)
         
-        logger.notice("🛰️ Sending to AI provider: \(self.aiService.selectedProvider.rawValue)\nSystem Message: \(systemMessage)\nUser Message: \(formattedText)")
+        logger.notice("🛰️ Sending to AI provider: \(self.aiService.selectedProvider.rawValue, privacy: .public)\nSystem Message: \(systemMessage, privacy: .public)\nUser Message: \(formattedText, privacy: .public)")
         
         if aiService.selectedProvider == .ollama {
             do {
