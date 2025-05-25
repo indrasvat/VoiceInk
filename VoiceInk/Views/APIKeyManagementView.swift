@@ -70,23 +70,21 @@ struct APIKeyManagementView: View {
             }
             
             if aiService.selectedProvider == .ollama {
-                // Ollama Configuration
                 VStack(alignment: .leading, spacing: 16) {
-                    // Header
+                    // Header with status
                     HStack {
                         Label("Ollama Configuration", systemImage: "server.rack")
                             .font(.headline)
                         
                         Spacer()
                         
-                        // Connection Status Indicator
                         HStack(spacing: 6) {
                             Circle()
                                 .fill(isCheckingOllama ? Color.orange : (ollamaModels.isEmpty ? Color.red : Color.green))
                                 .frame(width: 8, height: 8)
                             Text(isCheckingOllama ? "Checking..." : (ollamaModels.isEmpty ? "Disconnected" : "Connected"))
                                 .font(.caption)
-                        .foregroundColor(.secondary)
+                                .foregroundColor(.secondary)
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -94,76 +92,66 @@ struct APIKeyManagementView: View {
                         .cornerRadius(6)
                     }
                     
-                    // Base URL Configuration
-                    VStack(alignment: .leading, spacing: 8) {
+                    // Server URL
+                    HStack {
                         Label("Server URL", systemImage: "link")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         
-                        HStack(spacing: 8) {
-                            if isEditingURL {
-                        TextField("Base URL", text: $ollamaBaseURL)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                                
-                                Button(action: {
-                                    aiService.updateOllamaBaseURL(ollamaBaseURL)
-                                    checkOllamaConnection()
-                                    isEditingURL = false
-                                }) {
-                                    Text("Save")
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                            } else {
-                                Text(ollamaBaseURL)
-                                    .font(.system(.body, design: .monospaced))
-                                    .foregroundColor(.primary)
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    isEditingURL = true
-                                }) {
-                                    Image(systemName: "pencil")
-                                }
-                                .buttonStyle(.borderless)
-                                .controlSize(.small)
-                                
-                                Button(action: {
-                                    ollamaBaseURL = "http://localhost:11434"
-                                    aiService.updateOllamaBaseURL(ollamaBaseURL)
+                        Spacer()
+                        
+                        if isEditingURL {
+                            TextField("Base URL", text: $ollamaBaseURL)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(maxWidth: 200)
+                            
+                            Button("Save") {
+                                aiService.updateOllamaBaseURL(ollamaBaseURL)
                                 checkOllamaConnection()
-                                }) {
-                                    Image(systemName: "arrow.counterclockwise")
-                                }
-                                .buttonStyle(.borderless)
-                                .foregroundColor(.secondary)
-                                .controlSize(.small)
+                                isEditingURL = false
                             }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        } else {
+                            Text(ollamaBaseURL)
+                                .font(.system(.body, design: .monospaced))
+                                .foregroundColor(.primary)
+                            
+                            Button(action: { isEditingURL = true }) {
+                                Image(systemName: "pencil")
+                            }
+                            .buttonStyle(.borderless)
+                            .controlSize(.small)
+                            
+                            Button(action: {
+                                ollamaBaseURL = "http://localhost:11434"
+                                aiService.updateOllamaBaseURL(ollamaBaseURL)
+                                checkOllamaConnection()
+                            }) {
+                                Image(systemName: "arrow.counterclockwise")
+                            }
+                            .buttonStyle(.borderless)
+                            .foregroundColor(.secondary)
+                            .controlSize(.small)
                         }
                     }
-                    .padding(12)
-                    .background(Color.secondary.opacity(0.05))
-                    .cornerRadius(8)
                     
-                    // Model Selection
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("Model Selection", systemImage: "cpu")
+                    // Model selection and refresh
+                    HStack {
+                        Label("Model", systemImage: "cpu")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+                        
+                        Spacer()
                         
                         if ollamaModels.isEmpty {
                             HStack(spacing: 8) {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .foregroundColor(.orange)
-                            Text("No models available")
-                                .foregroundColor(.secondary)
-                                .italic()
+                                Text("No models available")
+                                    .foregroundColor(.secondary)
+                                    .italic()
                             }
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.orange.opacity(0.1))
-                            .cornerRadius(8)
                         } else {
                             Picker("", selection: $selectedOllamaModel) {
                                 ForEach(ollamaModels) { model in
@@ -174,23 +162,19 @@ struct APIKeyManagementView: View {
                                 aiService.updateSelectedOllamaModel(newValue)
                             }
                             .labelsHidden()
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: 150)
                         }
                         
-                        // Refresh Button
-                        Button(action: {
-                            checkOllamaConnection()
-                        }) {
-                            Label(isCheckingOllama ? "Refreshing..." : "Refresh Models", systemImage: isCheckingOllama ? "arrow.triangle.2.circlepath" : "arrow.clockwise")
+                        Button(action: { checkOllamaConnection() }) {
+                            Label(isCheckingOllama ? "Refreshing..." : "Refresh", systemImage: isCheckingOllama ? "arrow.triangle.2.circlepath" : "arrow.clockwise")
                                 .font(.caption)
                         }
                         .disabled(isCheckingOllama)
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
                     }
-                    .padding(12)
-                    .background(Color.secondary.opacity(0.05))
-                    .cornerRadius(8)
                     
-                    // Help Text
+                    // Help text for troubleshooting
                     if ollamaModels.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Troubleshooting")
@@ -209,12 +193,11 @@ struct APIKeyManagementView: View {
                             .font(.caption)
                         }
                         .padding(12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.secondary.opacity(0.05))
                         .cornerRadius(8)
                     }
                 }
-                .padding(16)
+                .padding()
                 .background(Color.secondary.opacity(0.03))
                 .cornerRadius(12)
             } else if aiService.selectedProvider == .custom {
