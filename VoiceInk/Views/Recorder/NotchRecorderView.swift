@@ -51,9 +51,12 @@ struct NotchRecorderView: View {
                         NotchToggleButton(
                             isEnabled: powerModeManager.isPowerModeEnabled,
                             icon: powerModeManager.currentActiveConfiguration.emoji,
-                            color: .orange
+                            color: .orange,
+                            disabled: !powerModeManager.isPowerModeEnabled
                         ) {
-                            showPowerModePopover.toggle()
+                            if powerModeManager.isPowerModeEnabled {
+                                showPowerModePopover.toggle()
+                            }
                         }
                         .frame(width: 22)
                         .popover(isPresented: $showPowerModePopover, arrowEdge: .bottom) {
@@ -111,100 +114,36 @@ struct NotchRecorderView: View {
     }
 }
 
-// Popover view for prompt selection
-struct NotchPromptPopover: View {
-    @ObservedObject var enhancementService: AIEnhancementService
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Select Mode")
-                .font(.headline)
-                .foregroundColor(.white.opacity(0.9))
-                .padding(.horizontal)
-                .padding(.top, 8)
-            
-            Divider()
-                .background(Color.white.opacity(0.1))
-            
-            ScrollView {
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(enhancementService.allPrompts) { prompt in
-                        NotchPromptRow(prompt: prompt, isSelected: enhancementService.selectedPromptId == prompt.id) {
-                            enhancementService.setActivePrompt(prompt)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-            }
-        }
-        .frame(width: 180)
-        .frame(maxHeight: 300)
-        .padding(.vertical, 8)
-        .background(Color.black)
-        .environment(\.colorScheme, .dark)
-    }
-}
 
-// Row view for each prompt
-struct NotchPromptRow: View {
-    let prompt: CustomPrompt
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: prompt.icon.rawValue)
-                    .foregroundColor(isSelected ? .green : .white.opacity(0.8))
-                    .font(.system(size: 12))
-                Text(prompt.title)
-                    .foregroundColor(.white.opacity(0.9))
-                    .font(.system(size: 13))
-                    .lineLimit(1)
-                if isSelected {
-                    Spacer()
-                    Image(systemName: "checkmark")
-                        .foregroundColor(.green)
-                        .font(.system(size: 10))
-                }
-            }
-            .contentShape(Rectangle())
-            .padding(.vertical, 4)
-            .padding(.horizontal, 8)
-        }
-        .buttonStyle(.plain)
-        .background(isSelected ? Color.white.opacity(0.1) : Color.clear)
-        .cornerRadius(4)
-    }
-}
 
 // New toggle button component matching the notch aesthetic
 struct NotchToggleButton: View {
     let isEnabled: Bool
     let icon: String
     let color: Color
+    let disabled: Bool
     let action: () -> Void
+    
+    init(isEnabled: Bool, icon: String, color: Color, disabled: Bool = false, action: @escaping () -> Void) {
+        self.isEnabled = isEnabled
+        self.icon = icon
+        self.color = color
+        self.disabled = disabled
+        self.action = action
+    }
     
     var body: some View {
         Button(action: action) {
             Text(icon)
                 .font(.system(size: 12))
-                .foregroundColor(isEnabled ? .white : .white.opacity(0.6))
+                .foregroundColor(disabled ? .white.opacity(0.3) : (isEnabled ? .white : .white.opacity(0.6)))
         }
         .buttonStyle(PlainButtonStyle())
+        .disabled(disabled)
     }
 }
 
-struct CustomScaleModifier: ViewModifier {
-    let scale: CGFloat
-    let opacity: CGFloat
-    
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(scale, anchor: .center)
-            .opacity(opacity)
-    }
-}
+
 
 // Notch-specific button styles
 struct NotchRecordButton: View {

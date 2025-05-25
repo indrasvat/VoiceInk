@@ -69,9 +69,12 @@ struct MiniRecorderView: View {
                             NotchToggleButton(
                                 isEnabled: powerModeManager.isPowerModeEnabled,
                                 icon: powerModeManager.currentActiveConfiguration.emoji,
-                                color: .orange
+                                color: .orange,
+                                disabled: !powerModeManager.isPowerModeEnabled
                             ) {
-                                showPowerModePopover.toggle()
+                                if powerModeManager.isPowerModeEnabled {
+                                    showPowerModePopover.toggle()
+                                }
                             }
                             .frame(width: 24)
                             .padding(.trailing, 8)
@@ -87,4 +90,4 @@ struct MiniRecorderView: View {
     }
 }
 
-// Visual Effect View wrapper for NSVisualEffectVie
+
