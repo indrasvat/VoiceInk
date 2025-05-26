@@ -27,14 +27,12 @@ class ActiveWindowService: ObservableObject {
     func applyConfigurationForCurrentApp() async {
         // If power mode is disabled, don't do anything
         guard PowerModeManager.shared.isPowerModeEnabled else {
-            print("🔌 Power Mode is disabled globally - skipping configuration application")
             return
         }
 
         guard let frontmostApp = NSWorkspace.shared.frontmostApplication,
               let bundleIdentifier = frontmostApp.bundleIdentifier else { return }
         
-        print("🎯 Active Application: \(frontmostApp.localizedName ?? "Unknown") (\(bundleIdentifier))")
         await MainActor.run {
             currentApplication = frontmostApp
         }
@@ -69,7 +67,6 @@ class ActiveWindowService: ObservableObject {
         
         // Get configuration for the current app or use default if none exists
         let config = PowerModeManager.shared.getConfigurationForApp(bundleIdentifier) ?? PowerModeManager.shared.defaultConfig
-        print("⚡️ Using Configuration: \(config.name) (AI Enhancement: \(config.isAIEnhancementEnabled ? "Enabled" : "Disabled"))")
         
         // Set as active configuration in PowerModeManager
         await MainActor.run {
@@ -93,12 +90,10 @@ class ActiveWindowService: ObservableObject {
             if config.isAIEnhancementEnabled {
                 if let promptId = config.selectedPrompt,
                    let uuid = UUID(uuidString: promptId) {
-                    print("🎯 Applied Prompt: \(promptId)")
                     enhancementService.selectedPromptId = uuid
                 } else {
                     // Auto-select first prompt if none is selected and AI is enabled
                     if let firstPrompt = enhancementService.allPrompts.first {
-                        print("🎯 Auto-selected Prompt: \(firstPrompt.title)")
                         enhancementService.selectedPromptId = firstPrompt.id
                     }
                 }
@@ -111,25 +106,18 @@ class ActiveWindowService: ObservableObject {
                 // Apply AI provider if specified, otherwise use current global provider
                 if let providerName = config.selectedAIProvider,
                    let provider = AIProvider(rawValue: providerName) {
-                    print("🤖 Applied AI Provider: \(provider.rawValue)")
                     aiService.selectedProvider = provider
                     
                     // Apply model if specified, otherwise use default model
                     if let model = config.selectedAIModel,
                        !model.isEmpty {
-                        print("🧠 Applied AI Model: \(model)")
                         aiService.selectModel(model)
-                    } else {
-                        print("🧠 Using default model for provider: \(aiService.currentModel)")
                     }
-                } else {
-                    print("🤖 Using global AI Provider: \(aiService.selectedProvider.rawValue)")
                 }
             }
             
             // Apply language selection if specified
             if let language = config.selectedLanguage {
-                print("🌐 Applied Language: \(language)")
                 UserDefaults.standard.set(language, forKey: "SelectedLanguage")
                 // Notify that language has changed to update the prompt
                 NotificationCenter.default.post(name: .languageDidChange, object: nil)
@@ -138,18 +126,25 @@ class ActiveWindowService: ObservableObject {
         
         // Apply Whisper model selection - do this outside of MainActor to allow async operations
         if let whisperState = self.whisperState,
-           let modelName = config.selectedWhisperModel,
-           let selectedModel = await whisperState.availableModels.first(where: { $0.name == modelName }) {
-            print("🎤 Applied Whisper Model: \(selectedModel.name)")
-            await whisperState.setDefaultModel(selectedModel)
-            
-            await whisperState.cleanupModelResources()
-            
-            do {
-                try await whisperState.loadModel(selectedModel)
-                print("🎤 Loaded Whisper Model: \(selectedModel.name)")
-            } catch {
-                print("❌ Failed to load Whisper Model: \(error.localizedDescription)")
+           let modelName = config.selectedWhisperModel {
+            // Access availableModels on MainActor since it's a published property
+            let models = await MainActor.run { whisperState.availableModels }
+            if let selectedModel = models.first(where: { $0.name == modelName }) {
+                
+                // Only perform model operations if switching to a different model
+                let currentModelName = await MainActor.run { whisperState.currentModel?.name }
+                if currentModelName != modelName {
+                    // Only load/unload if actually changing models
+                    await whisperState.setDefaultModel(selectedModel)
+                    await whisperState.cleanupModelResources()
+                    
+                    do {
+                        try await whisperState.loadModel(selectedModel)
+                    } catch {
+                        // Handle error silently or log if needed
+                    }
+                }
+                // If model is the same, do nothing - skip all operations
             }
         }
     }
