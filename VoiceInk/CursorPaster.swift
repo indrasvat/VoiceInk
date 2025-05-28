@@ -1,19 +1,26 @@
 import Foundation
 import AppKit
-import OSLog
 
 class CursorPaster {
     private static let pasteCompletionDelay: TimeInterval = 0.3
-    private static let logger = Logger(subsystem: "com.voiceink", category: "CursorPaster")
     
     static func pasteAtCursor(_ text: String) {
         guard AXIsProcessTrusted() else {
-            print("Accessibility permissions not granted. Cannot paste at cursor.")
             return
         }
         
         let pasteboard = NSPasteboard.general
-        let savedItems = pasteboard.pasteboardItems ?? []
+        
+        var savedContents: [(NSPasteboard.PasteboardType, Data)] = []
+        let currentItems = pasteboard.pasteboardItems ?? []
+        
+        for item in currentItems {
+            for type in item.types {
+                if let data = item.data(forType: type) {
+                    savedContents.append((type, data))
+                }
+            }
+        }
         
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
@@ -25,9 +32,11 @@ class CursorPaster {
         }
         
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + pasteCompletionDelay) {
-            if !savedItems.isEmpty {
+            if !savedContents.isEmpty {
                 pasteboard.clearContents()
-                pasteboard.writeObjects(savedItems)
+                for (type, data) in savedContents {
+                    pasteboard.setData(data, forType: type)
+                }
             }
         }
     }
@@ -42,11 +51,7 @@ class CursorPaster {
         var error: NSDictionary?
         if let scriptObject = NSAppleScript(source: script) {
             _ = scriptObject.executeAndReturnError(&error)
-            if error != nil {
-                logger.notice("AppleScript paste failed with error: \(error?.description ?? "Unknown error")")
-                return false
-            }
-            return true
+            return error == nil
         }
         return false
     }
