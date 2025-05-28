@@ -91,37 +91,22 @@ struct EnhancementSettingsView: View {
                         
                         // Prompts Section
                         VStack(alignment: .leading, spacing: 12) {
-                            if enhancementService.allPrompts.isEmpty {
-                                Text("No prompts available")
-                                    .foregroundColor(.secondary)
-                                    .font(.caption)
-                            } else {
-                                let columns = [
-                                    GridItem(.adaptive(minimum: 80, maximum: 100), spacing: 36)
-                                ]
-                                
-                                LazyVGrid(columns: columns, spacing: 24) {
-                                    ForEach(enhancementService.allPrompts) { prompt in
-                                        prompt.promptIcon(
-                                            isSelected: enhancementService.selectedPromptId == prompt.id,
-                                            onTap: { withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                                enhancementService.setActivePrompt(prompt)
-                                            }},
-                                            onEdit: { selectedPromptForEdit = $0 },
-                                            onDelete: { enhancementService.deletePrompt($0) },
-                                            assistantTriggerWord: enhancementService.assistantTriggerWord
-                                        )
-                                    }
-                                    
-                                    // Plus icon using the same styling as prompt icons
-                                    CustomPrompt.addNewButton {
-                                        isEditingPrompt = true
-                                    }
-                                    .help("Add new prompt")
-                                }
-                                .padding(.vertical, 12)
-                                .padding(.horizontal, 16)
-                            }
+                            PromptSelectionGrid(
+                                selectedPromptId: enhancementService.selectedPromptId,
+                                onPromptTap: { prompt in
+                                    enhancementService.setActivePrompt(prompt)
+                                },
+                                onPromptEdit: { prompt in
+                                    selectedPromptForEdit = prompt
+                                },
+                                onPromptDelete: { prompt in
+                                    enhancementService.deletePrompt(prompt)
+                                },
+                                onAddNew: {
+                                    isEditingPrompt = true
+                                },
+                                assistantTriggerWord: enhancementService.assistantTriggerWord
+                            )
                         }
                         
                         Divider()
