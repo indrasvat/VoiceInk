@@ -21,10 +21,8 @@ class AIEnhancementService: ObservableObject {
                 selectedPromptId = customPrompts.first?.id
             }
             
-            currentCaptureTask?.cancel()
-            
             if isEnhancementEnabled && useScreenCaptureContext {
-                currentCaptureTask = Task {
+                Task {
                     await captureScreenContext()
                 }
             }
@@ -66,7 +64,6 @@ class AIEnhancementService: ObservableObject {
     
     private let aiService: AIService
     private let screenCaptureService: ScreenCaptureService
-    private var currentCaptureTask: Task<Void, Never>?
     private let maxRetries = 3
     private let baseTimeout: TimeInterval = 10
     private let rateLimitInterval: TimeInterval = 1.0
