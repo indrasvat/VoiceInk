@@ -206,6 +206,22 @@ struct PromptEditorView: View {
                         }
                         .padding(.horizontal)
                         
+                        // Trigger Word Field
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Trigger Word")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Text("Optional word to quickly activate this prompt")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            
+                            TextField("Enter a trigger word (optional)", text: $triggerWord)
+                                .textFieldStyle(.roundedBorder)
+                                .font(.body)
+                        }
+                        .padding(.horizontal)
+                        
                         if case .add = mode {
                             // Templates Section with modern styling
                             VStack(alignment: .leading, spacing: 16) {
