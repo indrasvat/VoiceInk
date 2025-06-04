@@ -27,10 +27,6 @@ class AudioDeviceManager: ObservableObject {
     
     static let shared = AudioDeviceManager()
 
-    private static let audioInputModeKey = "audioInputMode"
-    private static let selectedAudioDeviceUIDKey = "selectedAudioDeviceUID"
-    private static let prioritizedDevicesKey = "prioritizedDevices"
-    
     init() {
         setupFallbackDevice()
         loadPrioritizedDevices()
@@ -38,7 +34,7 @@ class AudioDeviceManager: ObservableObject {
             self?.initializeSelectedDevice()
         }
         
-        if let savedMode = UserDefaults.standard.string(forKey: AudioDeviceManager.audioInputModeKey),
+        if let savedMode = UserDefaults.standard.audioInputModeRawValue,
            let mode = AudioInputMode(rawValue: savedMode) {
             inputMode = mode
         }
@@ -68,7 +64,7 @@ class AudioDeviceManager: ObservableObject {
             return
         }
         
-        if let savedUID = UserDefaults.standard.string(forKey: AudioDeviceManager.selectedAudioDeviceUIDKey) {
+        if let savedUID = UserDefaults.standard.selectedAudioDeviceUID {
             if let device = availableDevices.first(where: { $0.uid == savedUID }) {
                 selectedDeviceID = device.id
                 logger.info("Loaded saved device UID: \(savedUID), mapped to ID: \(device.id)")
@@ -77,7 +73,7 @@ class AudioDeviceManager: ObservableObject {
                 }
             } else {
                 logger.warning("Saved device UID \(savedUID) is no longer available")
-                UserDefaults.standard.removeObject(forKey: AudioDeviceManager.selectedAudioDeviceUIDKey)
+                UserDefaults.standard.removeObject(forKey: UserDefaults.Keys.selectedAudioDeviceUID)
                 fallbackToDefaultDevice()
             }
         } else {
@@ -208,27 +204,28 @@ class AudioDeviceManager: ObservableObject {
         if let name = getDeviceName(deviceID: id) {
             logger.info("Selected device name: \(name)")
         }
-        
-        if let deviceToSelect = availableDevices.first(where: { $0.id == id }), let uid = deviceToSelect.uid {
+
+        if let deviceToSelect = availableDevices.first(where: { $0.id == id }) {
+            let uid = deviceToSelect.uid
             DispatchQueue.main.async {
                 self.selectedDeviceID = id
-                UserDefaults.standard.set(uid, forKey: AudioDeviceManager.selectedAudioDeviceUIDKey)
+                UserDefaults.standard.selectedAudioDeviceUID = uid
                 self.logger.info("Device selection saved with UID: \(uid)")
                 self.notifyDeviceChange()
             }
         } else {
-            logger.error("Attempted to select unavailable device or device with no UID: \(id)")
+            logger.error("Attempted to select unavailable device: \(id)")
             fallbackToDefaultDevice()
         }
     }
     
     func selectInputMode(_ mode: AudioInputMode) {
         inputMode = mode
-        UserDefaults.standard.set(mode.rawValue, forKey: AudioDeviceManager.audioInputModeKey)
+        UserDefaults.standard.audioInputModeRawValue = mode.rawValue
         
         if mode == .systemDefault {
             selectedDeviceID = nil
-            UserDefaults.standard.removeObject(forKey: AudioDeviceManager.selectedAudioDeviceUIDKey)
+            UserDefaults.standard.removeObject(forKey: UserDefaults.Keys.selectedAudioDeviceUID)
         } else if selectedDeviceID == nil {
             if inputMode == .custom {
                 if let firstDevice = availableDevices.first {
@@ -260,7 +257,7 @@ class AudioDeviceManager: ObservableObject {
     }
     
     private func loadPrioritizedDevices() {
-        if let data = UserDefaults.standard.data(forKey: AudioDeviceManager.prioritizedDevicesKey),
+        if let data = UserDefaults.standard.prioritizedDevicesData,
            let devices = try? JSONDecoder().decode([PrioritizedDevice].self, from: data) {
             prioritizedDevices = devices
             logger.info("Loaded \(devices.count) prioritized devices")
@@ -269,7 +266,7 @@ class AudioDeviceManager: ObservableObject {
     
     func savePrioritizedDevices() {
         if let data = try? JSONEncoder().encode(prioritizedDevices) {
-            UserDefaults.standard.set(data, forKey: AudioDeviceManager.prioritizedDevicesKey)
+            UserDefaults.standard.prioritizedDevicesData = data
             logger.info("Saved \(self.prioritizedDevices.count) prioritized devices")
         }
     }
