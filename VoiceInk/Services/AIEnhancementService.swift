@@ -173,9 +173,20 @@ class AIEnhancementService: ObservableObject {
         }
         
         let formattedText = "\n<TRANSCRIPT>\n\(text)\n</TRANSCRIPT>"
+        
+        // Log individual contexts if enabled and available
+        if useClipboardContext, let clipboardText = NSPasteboard.general.string(forType: .string), !clipboardText.isEmpty {
+            logger.notice("Clipboard Context: \(clipboardText, privacy: .public)")
+        }
+        if useScreenCaptureContext, let capturedText = screenCaptureService.lastCapturedText, !capturedText.isEmpty {
+            logger.notice("Screen Capture Context: \(capturedText, privacy: .public)")
+        }
+        
         let systemMessage = getSystemMessage(for: mode)
         
-        logger.notice("🛰️ Sending to AI provider: \(self.aiService.selectedProvider.rawValue, privacy: .public)\nSystem Message: \(systemMessage, privacy: .public)\nUser Message: \(formattedText, privacy: .public)")
+        logger.notice("🛰️ Sending to AI provider: \(self.aiService.selectedProvider.rawValue, privacy: .public)")
+        logger.notice("System Message: \(systemMessage, privacy: .public)")
+        logger.notice("User Message: \(formattedText, privacy: .public)")
         
         if aiService.selectedProvider == .ollama {
             do {
