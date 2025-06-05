@@ -7,12 +7,12 @@ struct PowerModeConfig: Codable, Identifiable, Equatable {
     var appConfigs: [AppConfig]?
     var urlConfigs: [URLConfig]?
     var isAIEnhancementEnabled: Bool
-    var selectedPrompt: String? // UUID string of the selected prompt
-    var selectedWhisperModel: String? // Name of the selected Whisper model
-    var selectedLanguage: String? // Language code (e.g., "en", "fr")
+    var selectedPrompt: String?
+    var selectedWhisperModel: String?
+    var selectedLanguage: String?
     var useScreenCapture: Bool
-    var selectedAIProvider: String? // AI provider name (e.g., "OpenAI", "Gemini")
-    var selectedAIModel: String? // AI model name (e.g., "gpt-4", "gemini-1.5-pro")
+    var selectedAIProvider: String?
+    var selectedAIModel: String?
     
     init(id: UUID = UUID(), name: String, emoji: String, appConfigs: [AppConfig]? = nil, 
          urlConfigs: [URLConfig]? = nil, isAIEnhancementEnabled: Bool, selectedPrompt: String? = nil,
@@ -28,8 +28,6 @@ struct PowerModeConfig: Codable, Identifiable, Equatable {
         self.useScreenCapture = useScreenCapture
         self.selectedAIProvider = selectedAIProvider ?? UserDefaults.standard.string(forKey: "selectedAIProvider")
         self.selectedAIModel = selectedAIModel
-        
-        // Use provided values or get from UserDefaults if nil
         self.selectedWhisperModel = selectedWhisperModel ?? UserDefaults.standard.string(forKey: "CurrentModel")
         self.selectedLanguage = selectedLanguage ?? UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "en"
     }
@@ -269,5 +267,12 @@ class PowerModeManager: ObservableObject {
     // Get all available configurations in order (default first, then custom configurations)
     func getAllAvailableConfigurations() -> [PowerModeConfig] {
         return [defaultConfig] + configurations
+    }
+    
+    func isEmojiInUse(_ emoji: String) -> Bool {
+        if defaultConfig.emoji == emoji {
+            return true
+        }
+        return configurations.contains { $0.emoji == emoji }
     }
 } 

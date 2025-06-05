@@ -157,6 +157,12 @@ struct ConfigurationView: View {
                         .buttonStyle(.plain)
                         .disabled(mode.isEditingDefault)
                         .opacity(mode.isEditingDefault ? 0.5 : 1)
+                        .popover(isPresented: $isShowingEmojiPicker, arrowEdge: .bottom) {
+                            EmojiPickerView(
+                                selectedEmoji: $selectedEmoji,
+                                isPresented: $isShowingEmojiPicker
+                            )
+                        }
                         
                         TextField("Name your power mode", text: $configName)
                             .font(.system(size: 18, weight: .bold))
@@ -176,31 +182,14 @@ struct ConfigurationView: View {
                     .background(CardBackground(isSelected: false))
                     .padding(.horizontal)
                     
-                    // Emoji Picker Overlay
-                    if isShowingEmojiPicker {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 40))], spacing: 12) {
-                            ForEach(commonEmojis, id: \.self) { emoji in
-                                Button(action: {
-                                    selectedEmoji = emoji
-                                    isShowingEmojiPicker = false
-                                }) {
-                                    Text(emoji)
-                                        .font(.system(size: 22))
-                                        .frame(width: 40, height: 40)
-                                        .background(
-                                            Circle()
-                                                .fill(selectedEmoji == emoji ? 
-                                                    Color.accentColor.opacity(0.15) : 
-                                                    Color.clear)
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(16)
-                        .background(CardBackground(isSelected: false))
-                        .padding(.horizontal)
-                    }
+                    // Enhanced Emoji Picker with Custom Emoji Support
+                    // if isShowingEmojiPicker { // <<< This conditional block will be removed
+                    //     EmojiPickerView(
+                    //         selectedEmoji: $selectedEmoji,
+                    //         isPresented: $isShowingEmojiPicker
+                    //     )
+                    //     .padding(.horizontal)
+                    // }
                     
                     // SECTION 1: TRIGGERS
                     if !mode.isEditingDefault {
