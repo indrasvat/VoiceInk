@@ -27,6 +27,7 @@ struct VoiceInkExportedSettings: Codable {
     let dictionaryItems: [DictionaryItem]?
     let wordReplacements: [String: String]?
     let generalSettings: GeneralSettings?
+    let customEmojis: [String]?
 }
 
 class ImportExportService {
@@ -57,6 +58,7 @@ class ImportExportService {
     @MainActor
     func exportSettings(enhancementService: AIEnhancementService, whisperPrompt: WhisperPrompt, hotkeyManager: HotkeyManager, menuBarManager: MenuBarManager, mediaController: MediaController, soundManager: SoundManager, whisperState: WhisperState) {
         let powerModeManager = PowerModeManager.shared
+        let emojiManager = EmojiManager.shared
 
         let exportablePrompts = enhancementService.customPrompts.filter { !$0.isPredefined }
 
@@ -86,21 +88,22 @@ class ImportExportService {
             isSystemMuteEnabled: mediaController.isSystemMuteEnabled
         )
 
-        let settingsToExport = VoiceInkExportedSettings(
+        let exportedSettings = VoiceInkExportedSettings(
             version: currentSettingsVersion,
             customPrompts: exportablePrompts,
             powerModeConfigs: powerConfigs,
             defaultPowerModeConfig: defaultPowerConfig,
             dictionaryItems: exportedDictionaryItems,
             wordReplacements: exportedWordReplacements,
-            generalSettings: generalSettingsToExport
+            generalSettings: generalSettingsToExport,
+            customEmojis: emojiManager.customEmojis
         )
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
 
         do {
-            let jsonData = try encoder.encode(settingsToExport)
+            let jsonData = try encoder.encode(exportedSettings)
 
             let savePanel = NSSavePanel()
             savePanel.allowedContentTypes = [UTType.json]
@@ -161,6 +164,13 @@ class ImportExportService {
                     powerModeManager.defaultConfig = importedSettings.defaultPowerModeConfig
                     powerModeManager.saveConfigurations()
                     powerModeManager.updateConfiguration(powerModeManager.defaultConfig)
+
+                    if let customEmojis = importedSettings.customEmojis {
+                        let emojiManager = EmojiManager.shared
+                        for emoji in customEmojis {
+                            _ = emojiManager.addCustomEmoji(emoji)
+                        }
+                    }
 
                     if let itemsToImport = importedSettings.dictionaryItems {
                         Task {

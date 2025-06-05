@@ -89,7 +89,7 @@ struct EmojiPickerView: View {
                             .foregroundColor(inputFeedbackMessage == "Emoji already exists!" || inputFeedbackMessage == "Invalid emoji." ? .red : .secondary)
                             .transition(.opacity)
                     }
-                    Text("Tip: Use ⌃⌘Space for emoji keyboard.")
+                    Text("Tip: Use ⌃⌘Space for emoji picker.")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
