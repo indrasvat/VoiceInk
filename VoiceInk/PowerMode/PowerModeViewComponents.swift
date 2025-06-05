@@ -58,7 +58,7 @@ struct PowerModeConfigurationsGrid: View {
     
     var body: some View {
         LazyVStack(spacing: 12) {
-            ForEach(powerModeManager.configurations.sorted(by: { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending })) { config in
+            ForEach(powerModeManager.configurations) { config in
                 ConfigurationRow(
                     config: config,
                     isEditing: false,
