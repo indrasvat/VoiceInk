@@ -11,7 +11,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     @Published var isModelLoaded = false
     @Published var canTranscribe = false
     @Published var isRecording = false
-    @Published var currentModel: WhisperModel?
+    @Published var loadedLocalModel: WhisperModel?
     @Published var currentTranscriptionModel: (any TranscriptionModel)?
     @Published var isModelLoading = false
     @Published var availableModels: [WhisperModel] = []
@@ -112,11 +112,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         createRecordingsDirectoryIfNeeded()
         loadAvailableModels()
         loadCurrentTranscriptionModel()
-        
-        if let savedModelName = UserDefaults.standard.string(forKey: "CurrentModel"),
-           let savedModel = availableModels.first(where: { $0.name == savedModelName }) {
-            currentModel = savedModel
-        }
     }
     
     private func createRecordingsDirectoryIfNeeded() {
@@ -403,16 +398,11 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         return permanentURL
     }
 
+    // Loads the default transcription model from UserDefaults
     private func loadCurrentTranscriptionModel() {
         if let savedModelName = UserDefaults.standard.string(forKey: "CurrentTranscriptionModel"),
            let savedModel = allAvailableModels.first(where: { $0.name == savedModelName }) {
             currentTranscriptionModel = savedModel
-            
-            // If it's a local model, also set it as currentModel for backward compatibility
-            if let localModel = savedModel as? LocalModel,
-               let whisperModel = availableModels.first(where: { $0.name == localModel.name }) {
-                currentModel = whisperModel
-            }
         }
     }
 
@@ -422,14 +412,9 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             self.currentTranscriptionModel = model
             UserDefaults.standard.set(model.name, forKey: "CurrentTranscriptionModel")
             
-            // If it's a local model, also update currentModel for backward compatibility
-            if let localModel = model as? LocalModel,
-               let whisperModel = self.availableModels.first(where: { $0.name == localModel.name }) {
-                self.currentModel = whisperModel
-                UserDefaults.standard.set(whisperModel.name, forKey: "CurrentModel")
-            } else {
-                // For cloud models, clear the old currentModel
-                self.currentModel = nil
+            // For cloud models, clear the old loadedLocalModel
+            if model.provider != .local {
+                self.loadedLocalModel = nil
             }
             
             // Enable transcription for cloud models immediately since they don't need loading

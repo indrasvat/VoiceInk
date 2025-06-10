@@ -25,7 +25,9 @@ class LocalTranscriptionService: TranscriptionService {
         if let whisperState = whisperState,
            await whisperState.isModelLoaded,
            let loadedContext = await whisperState.whisperContext,
-           await whisperState.currentModel?.name == localModel.name {
+           let currentModel = await whisperState.currentTranscriptionModel,
+           currentModel.provider == .local,
+           currentModel.name == localModel.name {
             
             logger.notice("✅ Using already loaded model: \(localModel.name)")
             whisperContext = loadedContext

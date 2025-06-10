@@ -364,7 +364,7 @@ struct ConfigurationView: View {
                             // Create a simple binding that uses current model if nil
                             let modelBinding = Binding<String?>(
                                 get: {
-                                    selectedTranscriptionModelName ?? whisperState.currentTranscriptionModel?.name ?? whisperState.availableModels.first?.name
+                                    selectedTranscriptionModelName ?? whisperState.usableModels.first?.name
                                 },
                                 set: { selectedTranscriptionModelName = $0 }
                             )
@@ -375,9 +375,6 @@ struct ConfigurationView: View {
                                     .foregroundColor(.secondary)
                                 
                                 Picker("", selection: modelBinding) {
-                                    Text("Default (\(whisperState.currentTranscriptionModel?.displayName ?? "None"))")
-                                        .tag(nil as String?)
-                                    
                                     ForEach(whisperState.usableModels, id: \.name) { model in
                                         Text(model.displayName).tag(model.name as String?)
                                     }

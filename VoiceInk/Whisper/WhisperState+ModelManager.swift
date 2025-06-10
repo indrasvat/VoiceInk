@@ -44,16 +44,10 @@ extension WhisperState {
             await whisperContext?.setPrompt(currentPrompt)
             
             isModelLoaded = true
-            currentModel = model
+            loadedLocalModel = model
         } catch {
             throw WhisperStateError.modelLoadFailed
         }
-    }
-    
-    func setDefaultModel(_ model: WhisperModel) async {
-        currentModel = model
-        UserDefaults.standard.set(model.name, forKey: "CurrentModel")
-        canTranscribe = true
     }
     
     // MARK: - Model Download & Management
@@ -255,9 +249,14 @@ extension WhisperState {
             
             // Update model state
             availableModels.removeAll { $0.id == model.id }
-            if currentModel?.id == model.id {
-                currentModel = nil
+            if currentTranscriptionModel?.name == model.name {
+
+                currentTranscriptionModel = nil
+                UserDefaults.standard.removeObject(forKey: "CurrentTranscriptionModel")
+
+                loadedLocalModel = nil
                 canTranscribe = false
+                UserDefaults.standard.removeObject(forKey: "CurrentModel")
             }
         } catch {
             logError("Error deleting model: \(model.name)", error)

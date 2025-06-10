@@ -129,7 +129,7 @@ import Foundation
             displayName: "Whisper Large v3 Turbo (Groq)",
             description: "Groq's ultra-fast Whisper Large v3 Turbo model with lightning-speed inference",
             provider: .groq,
-            speed: 0.7,
+            speed: 0.65,
             accuracy: 0.96,
             isMultilingual: true,
             supportedLanguages: getLanguageDictionary(isMultilingual: true, isLargeV3: true)
@@ -139,8 +139,8 @@ import Foundation
            displayName: "Scribe v1 (ElevenLabs)",
            description: "ElevenLabs' Scribe model for fast and accurate transcription.",
            provider: .elevenLabs,
-           speed: 0.8,
-           accuracy: 0.95,
+           speed: 0.75,
+           accuracy: 0.98,
            isMultilingual: true,
            supportedLanguages: getLanguageDictionary(isMultilingual: true, isLargeV3: true)
        ),

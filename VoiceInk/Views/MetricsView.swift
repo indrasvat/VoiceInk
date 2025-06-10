@@ -68,7 +68,7 @@ struct MetricsView: View {
     
     private var isSetupComplete: Bool {
         hasLoadedData &&
-        whisperState.currentModel != nil &&
+        whisperState.currentTranscriptionModel != nil &&
         KeyboardShortcuts.getShortcut(for: .toggleMiniRecorder) != nil &&
         AXIsProcessTrusted() &&
         CGPreflightScreenCaptureAccess()

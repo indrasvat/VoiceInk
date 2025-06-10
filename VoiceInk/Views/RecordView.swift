@@ -39,7 +39,7 @@ struct RecordView: View {
             Text("VOICEINK")
                 .font(.system(size: 42, weight: .bold))
             
-            if whisperState.currentModel != nil {
+            if whisperState.currentTranscriptionModel != nil {
                 Text("Powered by Whisper AI")
                     .font(.system(size: 15))
                     .foregroundColor(.secondary)

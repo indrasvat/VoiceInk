@@ -78,7 +78,7 @@ struct MetricsSetupView: View {
             title = "Enable Screen Recording"
             description = "Allow VoiceInk to understand context from your screen for transcript  Enhancement"
         default:
-            isCompleted = whisperState.currentModel != nil
+            isCompleted = whisperState.currentTranscriptionModel != nil
             icon = "arrow.down"
             title = "Download Model"
             description = "Choose and download an AI model"
