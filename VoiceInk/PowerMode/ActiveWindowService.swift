@@ -116,7 +116,7 @@ class ActiveWindowService: ObservableObject {
         }
         
         if let whisperState = self.whisperState,
-           let modelName = config.selectedWhisperModel,
+           let modelName = config.selectedTranscriptionModelName,
            let selectedModel = await whisperState.allAvailableModels.first(where: { $0.name == modelName }) {
             
             let currentModelName = await MainActor.run { whisperState.currentTranscriptionModel?.name }
@@ -127,7 +127,7 @@ class ActiveWindowService: ObservableObject {
                 await whisperState.setDefaultTranscriptionModel(selectedModel)
                 
                 // The cleanup and load cycle is only necessary for local models.
-                if selectedModel.provider == .local {
+                if selectedModel.provider == ModelProvider.local {
                     // Unload any previously loaded model to free up memory.
                     await whisperState.cleanupModelResources()
                     
