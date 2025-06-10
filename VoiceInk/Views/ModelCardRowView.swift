@@ -111,33 +111,40 @@ struct LocalModelCardView: View {
     }
     
     private var metadataSection: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             // Language
             Label(model.language, systemImage: "globe")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
+                .lineLimit(1)
             
             // Size
             Label(model.size, systemImage: "internaldrive")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
+                .lineLimit(1)
             
             // Speed
-            HStack(spacing: 4) {
+            HStack(spacing: 3) {
                 Text("Speed")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
                 progressDotsWithNumber(value: model.speed * 10)
             }
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
             
             // Accuracy
-            HStack(spacing: 4) {
+            HStack(spacing: 3) {
                 Text("Accuracy")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
                 progressDotsWithNumber(value: model.accuracy * 10)
             }
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
         }
+        .lineLimit(1)
     }
     
     private var descriptionSection: some View {
@@ -232,6 +239,7 @@ struct CloudModelCardView: View {
     @State private var apiKey = ""
     @State private var isVerifying = false
     @State private var verificationStatus: VerificationStatus = .none
+    @State private var isConfiguredState: Bool = false
     
     enum VerificationStatus {
         case none, verifying, success, failure
@@ -282,6 +290,7 @@ struct CloudModelCardView: View {
         .background(CardBackground(isSelected: isCurrent, useAccentGradientWhenSelected: isCurrent))
         .onAppear {
             loadSavedAPIKey()
+            isConfiguredState = isConfigured
         }
     }
     
@@ -306,7 +315,7 @@ struct CloudModelCardView: View {
                     .padding(.vertical, 2)
                     .background(Capsule().fill(Color.accentColor))
                     .foregroundColor(.white)
-            } else if isConfigured {
+            } else if isConfiguredState {
                 Text("Configured")
                     .font(.system(size: 11, weight: .medium))
                     .padding(.horizontal, 6)
@@ -325,33 +334,40 @@ struct CloudModelCardView: View {
     }
     
     private var metadataSection: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             // Provider
             Label(model.provider.rawValue, systemImage: "cloud")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
+                .lineLimit(1)
             
             // Language
             Label(model.language, systemImage: "globe")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
+                .lineLimit(1)
             
             // Speed
-            HStack(spacing: 4) {
+            HStack(spacing: 3) {
                 Text("Speed")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
                 progressDotsWithNumber(value: model.speed * 10)
             }
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
             
             // Accuracy
-            HStack(spacing: 4) {
+            HStack(spacing: 3) {
                 Text("Accuracy")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
                 progressDotsWithNumber(value: model.accuracy * 10)
             }
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
         }
+        .lineLimit(1)
     }
     
     private var descriptionSection: some View {
@@ -369,7 +385,7 @@ struct CloudModelCardView: View {
                 Text("Default Model")
                     .font(.system(size: 12))
                     .foregroundColor(Color(.secondaryLabelColor))
-            } else if isConfigured {
+            } else if isConfiguredState {
                 Button(action: setDefaultAction) {
                     Text("Set as Default")
                         .font(.system(size: 12))
@@ -400,7 +416,7 @@ struct CloudModelCardView: View {
                 .buttonStyle(.plain)
             }
             
-            if isConfigured {
+            if isConfiguredState {
                 Menu {
                     Button {
                         clearAPIKey()
@@ -494,6 +510,7 @@ struct CloudModelCardView: View {
                     self.verificationStatus = .success
                     // Save the API key
                     UserDefaults.standard.set(self.apiKey, forKey: "\(self.providerKey)APIKey")
+                    self.isConfiguredState = true
                     
                     // Collapse the configuration section after successful verification
                     withAnimation(.easeInOut(duration: 0.3)) {
@@ -513,6 +530,7 @@ struct CloudModelCardView: View {
         UserDefaults.standard.removeObject(forKey: "\(providerKey)APIKey")
         apiKey = ""
         verificationStatus = .none
+        isConfiguredState = false
         
         withAnimation(.easeInOut(duration: 0.3)) {
             isExpanded = false
