@@ -49,7 +49,7 @@ import Foundation
              displayName: "Tiny",
              size: "75 MiB",
              supportedLanguages: getLanguageDictionary(isMultilingual: true),
-             description: "Tiny model, fastest, least accurate, supports multiple languages",
+             description: "Tiny model, fastest, least accurate",
              speed: 0.95,
              accuracy: 0.6,
              ramUsage: 0.3,
@@ -72,7 +72,7 @@ import Foundation
              size: "142 MiB",
              supportedLanguages: getLanguageDictionary(isMultilingual: false),
              description: "Base model optimized for English, good balance between speed and accuracy",
-             speed: 0.8,
+             speed: 0.85,
              accuracy: 0.75,
              ramUsage: 0.5,
              hash: "137c40403d78fd54d454da0f9bd998f78703390c"
@@ -82,8 +82,8 @@ import Foundation
              displayName: "Large v2",
              size: "2.9 GiB",
              supportedLanguages: getLanguageDictionary(isMultilingual: true),
-             description: "Large model v2, slower than Medium but more accurate, supports multiple languages",
-             speed: 0.5,
+             description: "Large model v2, slower than Medium but more accurate",
+             speed: 0.3,
              accuracy: 0.96,
              ramUsage: 3.8,
              hash: "0f4c8e30f21cf1769f637135f521436792c48186"
@@ -93,8 +93,8 @@ import Foundation
              displayName: "Large v3",
              size: "2.9 GiB",
              supportedLanguages: getLanguageDictionary(isMultilingual: true, isLargeV3: true),
-             description: "Large model v3, very slow but most accurate, supports multiple languages",
-             speed: 0.5,
+             description: "Large model v3, very slow but most accurate",
+             speed: 0.3,
              accuracy: 0.98,
              ramUsage: 3.9,
              hash: "ad82bf6a9043ceed055076d0fd39f5f186ff8062"
@@ -105,8 +105,8 @@ import Foundation
              size: "1.5 GiB",
              supportedLanguages: getLanguageDictionary(isMultilingual: true, isLargeV3: true),
              description:
-             "Large model v3 Turbo, faster than v3 with similar accuracy, supports multiple languages",
-             speed: 0.7,
+             "Large model v3 Turbo, faster than v3 with similar accuracy",
+             speed: 0.75,
              accuracy: 0.97,
              ramUsage: 1.8,
              hash: "4af2b29d7ec73d781377bfd1758ca957a807e941"
@@ -117,8 +117,8 @@ import Foundation
              size: "547 MiB",
              supportedLanguages: getLanguageDictionary(isMultilingual: true, isLargeV3: true),
              description: "Quantized version of Large v3 Turbo, faster with slightly lower accuracy",
-             speed: 0.7,
-             accuracy: 0.96,
+             speed: 0.75,
+             accuracy: 0.95,
              ramUsage: 1.0,
              hash: "e050f7970618a659205450ad97eb95a18d69c9ee"
          ),
@@ -127,7 +127,7 @@ import Foundation
         CloudModel(
             name: "whisper-large-v3-turbo",
             displayName: "Whisper Large v3 Turbo (Groq)",
-            description: "Groq's ultra-fast Whisper Large v3 Turbo model with lightning-speed inference",
+            description: "Whisper Large v3 Turbo model with Groq'slightning-speed inference",
             provider: .groq,
             speed: 0.65,
             accuracy: 0.96,
@@ -139,7 +139,7 @@ import Foundation
            displayName: "Scribe v1 (ElevenLabs)",
            description: "ElevenLabs' Scribe model for fast and accurate transcription.",
            provider: .elevenLabs,
-           speed: 0.75,
+           speed: 0.7,
            accuracy: 0.98,
            isMultilingual: true,
            supportedLanguages: getLanguageDictionary(isMultilingual: true, isLargeV3: true)
