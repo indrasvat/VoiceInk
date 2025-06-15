@@ -58,7 +58,7 @@ struct MetricsSetupView: View {
             .padding()
         }
         .frame(minWidth: 500, minHeight: 600)
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(Color(NSColor.controlBackgroundColor))
     }
     
     private func setupStep(for index: Int) -> some View {
