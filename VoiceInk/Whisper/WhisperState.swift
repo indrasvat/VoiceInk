@@ -362,15 +362,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             SoundManager.shared.playStopSound()
             if AXIsProcessTrusted() {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    CursorPaster.pasteAtCursor(text)
-                }
-            }
-            if isAutoCopyEnabled {
-                let success = ClipboardManager.copyToClipboard(text)
-                if success {
-                    clipboardMessage = "Transcription copied to clipboard"
-                } else {
-                    clipboardMessage = "Failed to copy to clipboard"
+                    CursorPaster.pasteAtCursor(text, shouldPreserveClipboard: !self.isAutoCopyEnabled)
                 }
             }
             try? FileManager.default.removeItem(at: url)
