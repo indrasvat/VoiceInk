@@ -6,6 +6,7 @@ struct AppNotificationView: View {
     let type: NotificationType
     let duration: TimeInterval
     let onClose: () -> Void
+    let onTap: (() -> Void)?
     
     @State private var progress: Double = 1.0
     @State private var timer: Timer?
@@ -37,9 +38,7 @@ struct AppNotificationView: View {
 
     var body: some View {
         ZStack {
-            // Main content
             HStack(alignment: .center, spacing: 12) {
-                // App icon on the left side
                 if let appIcon = NSApp.applicationIconImage {
                     Image(nsImage: appIcon)
                         .resizable()
@@ -64,9 +63,7 @@ struct AppNotificationView: View {
                 Spacer()
             }
             .padding(12)
-            .frame(height: 60) // Fixed compact height
-            
-            // Close button overlaid on top-right
+            .frame(height: 60)
             VStack {
                 HStack {
                     Spacer()
@@ -88,7 +85,6 @@ struct AppNotificationView: View {
                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.95))
         )
         .overlay(
-            // Progress bar at the bottom
             VStack {
                 Spacer()
                 GeometryReader { geometry in
@@ -106,6 +102,12 @@ struct AppNotificationView: View {
         }
         .onDisappear {
             timer?.invalidate()
+        }
+        .onTapGesture {
+            if let onTap = onTap {
+                onTap()
+                onClose()
+            }
         }
     }
     

@@ -14,13 +14,16 @@ class NotificationManager {
         title: String,
         message: String,
         type: AppNotificationView.NotificationType,
-        duration: TimeInterval = 8.0
+        duration: TimeInterval = 8.0,
+        onTap: (() -> Void)? = nil
     ) {
-        // If a notification is already showing, dismiss it before showing the new one.
-        if notificationWindow != nil {
-            dismissNotification()
-        }
+        dismissTimer?.invalidate()
+        dismissTimer = nil
         
+        if let existingWindow = notificationWindow {
+            existingWindow.close()
+            notificationWindow = nil
+        }
         let notificationView = AppNotificationView(
             title: title, 
             message: message, 
@@ -30,7 +33,8 @@ class NotificationManager {
                 Task { @MainActor in
                     self?.dismissNotification()
                 }
-            }
+            },
+            onTap: onTap
         )
         let hostingController = NSHostingController(rootView: notificationView)
         let size = hostingController.view.fittingSize
@@ -44,19 +48,17 @@ class NotificationManager {
         
         panel.contentView = hostingController.view
         panel.isFloatingPanel = true
-        panel.level = .mainMenu
-        panel.backgroundColor = .clear
+        panel.level = NSWindow.Level.mainMenu
+        panel.backgroundColor = NSColor.clear
         panel.hasShadow = false
         panel.isMovableByWindowBackground = false
         
-        // Position at final location and start with fade animation
         positionWindow(panel)
         panel.alphaValue = 0
-        panel.makeKeyAndOrderFront(nil)
+        panel.makeKeyAndOrderFront(nil as Any?)
         
         self.notificationWindow = panel
         
-        // Simple fade-in animation
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.3
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -74,19 +76,15 @@ class NotificationManager {
 
     @MainActor
     private func positionWindow(_ window: NSWindow) {
-        guard let screen = NSScreen.main else { return }
-        let screenRect = screen.visibleFrame
+        let activeScreen = NSApp.keyWindow?.screen ?? NSScreen.main ?? NSScreen.screens[0]
+        let screenRect = activeScreen.visibleFrame
         let windowRect = window.frame
         
-        let x = screenRect.maxX - windowRect.width - 20 // 20px padding from the right
-        let y = screenRect.maxY - windowRect.height - 20 // 20px padding from the top
+        let x = screenRect.maxX - windowRect.width - 20
+        let y = screenRect.maxY - windowRect.height - 20
         
         window.setFrameOrigin(NSPoint(x: x, y: y))
     }
-    
-
-    
-
 
     @MainActor
     func dismissNotification() {
