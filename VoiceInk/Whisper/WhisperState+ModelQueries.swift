@@ -15,6 +15,9 @@ extension WhisperState {
             case .deepgram:
                 let key = UserDefaults.standard.string(forKey: "DeepgramAPIKey")
                 return key != nil && !key!.isEmpty
+            case .custom:
+                // Custom models are always usable since they contain their own API keys
+                return true
             }
         }
     }

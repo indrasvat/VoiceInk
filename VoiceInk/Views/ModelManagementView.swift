@@ -4,10 +4,14 @@ import SwiftData
 struct ModelManagementView: View {
     @ObservedObject var whisperState: WhisperState
     @State private var modelToDelete: WhisperModel?
+    @State private var customModelToDelete: CustomCloudModel?
+    @State private var customModelToEdit: CustomCloudModel?
     @StateObject private var aiService = AIService()
+    @StateObject private var customModelManager = CustomModelManager.shared
     @EnvironmentObject private var enhancementService: AIEnhancementService
     @Environment(\.modelContext) private var modelContext
     @StateObject private var whisperPrompt = WhisperPrompt()
+
     
     var body: some View {
         ScrollView {
@@ -32,6 +36,19 @@ struct ModelManagementView: View {
                 secondaryButton: .cancel()
             )
         }
+        .alert(item: $customModelToDelete) { model in
+            Alert(
+                title: Text("Delete Custom Model"),
+                message: Text("Are you sure you want to delete the custom model '\(model.displayName)'?"),
+                primaryButton: .destructive(Text("Delete")) {
+                    customModelManager.removeCustomModel(withId: model.id)
+                    // Update whisperState to refresh the UI
+                    whisperState.refreshAllAvailableModels()
+                },
+                secondaryButton: .cancel()
+            )
+        }
+
     }
     
     private var defaultModelSection: some View {
@@ -76,7 +93,9 @@ struct ModelManagementView: View {
                         downloadProgress: whisperState.downloadProgress,
                         modelURL: whisperState.availableModels.first { $0.name == model.name }?.url,
                         deleteAction: {
-                            if let downloadedModel = whisperState.availableModels.first(where: { $0.name == model.name }) {
+                            if model.provider == .custom, let customModel = model as? CustomCloudModel {
+                                customModelToDelete = customModel
+                            } else if let downloadedModel = whisperState.availableModels.first(where: { $0.name == model.name }) {
                                 modelToDelete = downloadedModel
                             }
                         },
@@ -91,8 +110,21 @@ struct ModelManagementView: View {
                                     await whisperState.downloadModel(localModel)
                                 }
                             }
-                        }
+                        },
+                        editAction: model.provider == .custom ? { customModel in
+                            customModelToEdit = customModel
+                        } : nil
                     )
+                }
+                
+                // Add Custom Model Card at the bottom
+                AddCustomModelCardView(
+                    customModelManager: customModelManager,
+                    editingModel: customModelToEdit
+                ) {
+                    // Refresh the models when a new custom model is added
+                    whisperState.refreshAllAvailableModels()
+                    customModelToEdit = nil // Clear editing state
                 }
             }
         }

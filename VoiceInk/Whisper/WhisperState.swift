@@ -114,6 +114,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
         createRecordingsDirectoryIfNeeded()
         loadAvailableModels()
         loadCurrentTranscriptionModel()
+        refreshAllAvailableModels()
     }
     
     private func createRecordingsDirectoryIfNeeded() {
@@ -511,6 +512,10 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
 
     func getEnhancementService() -> AIEnhancementService? {
         return enhancementService
+    }
+    
+    func refreshAllAvailableModels() {
+        allAvailableModels = PredefinedModels.models
     }
 }
 

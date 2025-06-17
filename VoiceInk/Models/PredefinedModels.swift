@@ -27,15 +27,19 @@ import Foundation
  }
  
  enum PredefinedModels {
-     static func getLanguageDictionary(isMultilingual: Bool) -> [String: String] {
-         if !isMultilingual {
-             return ["en": "English"]
-         } else {
-             return allLanguages
-         }
-     }
- 
-     static let models: [any TranscriptionModel] = [
+    static func getLanguageDictionary(isMultilingual: Bool) -> [String: String] {
+        if !isMultilingual {
+            return ["en": "English"]
+        } else {
+            return allLanguages
+        }
+    }
+    
+    static var models: [any TranscriptionModel] {
+        return predefinedModels + CustomModelManager.shared.customModels
+    }
+    
+    private static let predefinedModels: [any TranscriptionModel] = [
          // Local Models
          LocalModel(
              name: "ggml-tiny",

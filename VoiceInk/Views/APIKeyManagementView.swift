@@ -44,7 +44,7 @@ struct APIKeyManagementView: View {
             
             // Provider Selection
             Picker("AI Provider", selection: $aiService.selectedProvider) {
-                ForEach(AIProvider.allCases.filter { $0 != .elevenLabs }, id: \.self) { provider in
+                ForEach(AIProvider.allCases.filter { $0 != .elevenLabs && $0 != .deepgram }, id: \.self) { provider in
                     Text(provider.rawValue).tag(provider)
                 }
             }

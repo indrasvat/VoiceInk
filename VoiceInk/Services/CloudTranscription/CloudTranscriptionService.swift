@@ -38,6 +38,7 @@ class CloudTranscriptionService: TranscriptionService {
     private let groqService = GroqTranscriptionService()
     private let elevenLabsService = ElevenLabsTranscriptionService()
     private let deepgramService = DeepgramTranscriptionService()
+    private let openAICompatibleService = OpenAICompatibleTranscriptionService()
     
     func transcribe(audioURL: URL, model: any TranscriptionModel) async throws -> String {
         switch model.provider {
@@ -47,6 +48,11 @@ class CloudTranscriptionService: TranscriptionService {
             return try await elevenLabsService.transcribe(audioURL: audioURL, model: model)
         case .deepgram:
             return try await deepgramService.transcribe(audioURL: audioURL, model: model)
+        case .custom:
+            guard let customModel = model as? CustomCloudModel else {
+                throw CloudTranscriptionError.unsupportedProvider
+            }
+            return try await openAICompatibleService.transcribe(audioURL: audioURL, model: customModel)
         default:
             throw CloudTranscriptionError.unsupportedProvider
         }
