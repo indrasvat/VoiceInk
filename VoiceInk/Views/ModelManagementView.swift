@@ -3,8 +3,6 @@ import SwiftData
 
 struct ModelManagementView: View {
     @ObservedObject var whisperState: WhisperState
-    @State private var modelToDelete: WhisperModel?
-    @State private var customModelToDelete: CustomCloudModel?
     @State private var customModelToEdit: CustomCloudModel?
     @StateObject private var aiService = AIService()
     @StateObject private var customModelManager = CustomModelManager.shared
@@ -12,7 +10,12 @@ struct ModelManagementView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var whisperPrompt = WhisperPrompt()
 
-    
+    // State for the unified alert
+    @State private var isShowingDeleteAlert = false
+    @State private var alertTitle = ""
+    @State private var alertMessage = ""
+    @State private var deleteActionClosure: () -> Void = {}
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -24,31 +27,14 @@ struct ModelManagementView: View {
         }
         .frame(minWidth: 600, minHeight: 500)
         .background(Color(NSColor.controlBackgroundColor))
-        .alert(item: $modelToDelete) { model in
+        .alert(isPresented: $isShowingDeleteAlert) {
             Alert(
-                title: Text("Delete Model"),
-                message: Text("Are you sure you want to delete the model '\(model.name)'?"),
-                primaryButton: .destructive(Text("Delete")) {
-                    Task {
-                        await whisperState.deleteModel(model)
-                    }
-                },
+                title: Text(alertTitle),
+                message: Text(alertMessage),
+                primaryButton: .destructive(Text("Delete"), action: deleteActionClosure),
                 secondaryButton: .cancel()
             )
         }
-        .alert(item: $customModelToDelete) { model in
-            Alert(
-                title: Text("Delete Custom Model"),
-                message: Text("Are you sure you want to delete the custom model '\(model.displayName)'?"),
-                primaryButton: .destructive(Text("Delete")) {
-                    customModelManager.removeCustomModel(withId: model.id)
-                    // Update whisperState to refresh the UI
-                    whisperState.refreshAllAvailableModels()
-                },
-                secondaryButton: .cancel()
-            )
-        }
-
     }
     
     private var defaultModelSection: some View {
@@ -93,10 +79,23 @@ struct ModelManagementView: View {
                         downloadProgress: whisperState.downloadProgress,
                         modelURL: whisperState.availableModels.first { $0.name == model.name }?.url,
                         deleteAction: {
-                            if model.provider == .custom, let customModel = model as? CustomCloudModel {
-                                customModelToDelete = customModel
+                            if let customModel = model as? CustomCloudModel {
+                                alertTitle = "Delete Custom Model"
+                                alertMessage = "Are you sure you want to delete the custom model '\(customModel.displayName)'?"
+                                deleteActionClosure = {
+                                    customModelManager.removeCustomModel(withId: customModel.id)
+                                    whisperState.refreshAllAvailableModels()
+                                }
+                                isShowingDeleteAlert = true
                             } else if let downloadedModel = whisperState.availableModels.first(where: { $0.name == model.name }) {
-                                modelToDelete = downloadedModel
+                                alertTitle = "Delete Model"
+                                alertMessage = "Are you sure you want to delete the model '\(downloadedModel.name)'?"
+                                deleteActionClosure = {
+                                    Task {
+                                        await whisperState.deleteModel(downloadedModel)
+                                    }
+                                }
+                                isShowingDeleteAlert = true
                             }
                         },
                         setDefaultAction: {
