@@ -486,21 +486,19 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     }
 
     // Function to set any transcription model as default
-    func setDefaultTranscriptionModel(_ model: any TranscriptionModel) async {
-        await MainActor.run {
-            self.currentTranscriptionModel = model
-            UserDefaults.standard.set(model.name, forKey: "CurrentTranscriptionModel")
-            
-            // For cloud models, clear the old loadedLocalModel
-            if model.provider != .local {
-                self.loadedLocalModel = nil
-            }
-            
-            // Enable transcription for cloud models immediately since they don't need loading
-            if model.provider != .local {
-                self.canTranscribe = true
-                self.isModelLoaded = true
-            }
+    func setDefaultTranscriptionModel(_ model: any TranscriptionModel) {
+        self.currentTranscriptionModel = model
+        UserDefaults.standard.set(model.name, forKey: "CurrentTranscriptionModel")
+        
+        // For cloud models, clear the old loadedLocalModel
+        if model.provider != .local {
+            self.loadedLocalModel = nil
+        }
+        
+        // Enable transcription for cloud models immediately since they don't need loading
+        if model.provider != .local {
+            self.canTranscribe = true
+            self.isModelLoaded = true
         }
         
         logger.info("Default transcription model set to: \(model.name) (\(model.provider.rawValue))")
@@ -514,7 +512,16 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
     }
     
     func refreshAllAvailableModels() {
+        let currentModelId = currentTranscriptionModel?.id
         allAvailableModels = PredefinedModels.models
+        
+        // If there was a current default model, find its new version in the refreshed list and update it.
+        // This handles cases where the default model was edited.
+        if let currentId = currentModelId,
+           let updatedModel = allAvailableModels.first(where: { $0.id == currentId })
+        {
+            setDefaultTranscriptionModel(updatedModel)
+        }
     }
 }
 
