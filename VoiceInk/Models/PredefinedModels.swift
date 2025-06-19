@@ -27,10 +27,15 @@ import Foundation
  }
  
  enum PredefinedModels {
-    static func getLanguageDictionary(isMultilingual: Bool) -> [String: String] {
+    static func getLanguageDictionary(isMultilingual: Bool, provider: ModelProvider = .local) -> [String: String] {
         if !isMultilingual {
             return ["en": "English"]
         } else {
+            // For Apple Native models, return only supported languages in simple format
+            if provider == .nativeApple {
+                let appleSupportedCodes = ["en", "es", "fr", "de"]
+                return allLanguages.filter { appleSupportedCodes.contains($0.key) }
+            }
             return allLanguages
         }
     }
@@ -105,14 +110,14 @@ import Foundation
             displayName: "Apple Speech",
             description: "Uses the native Apple Speech framework for transcription. Available on macOS Sonoma 14+.",
             isMultilingualModel: true,
-            supportedLanguages: appleNativeLanguages
+            supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .nativeApple)
         ),
          // Local Models
          LocalModel(
              name: "ggml-tiny",
              displayName: "Tiny",
              size: "75 MiB",
-             supportedLanguages: getLanguageDictionary(isMultilingual: true),
+             supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .local),
              description: "Tiny model, fastest, least accurate",
              speed: 0.95,
              accuracy: 0.6,
@@ -123,7 +128,7 @@ import Foundation
              name: "ggml-tiny.en",
              displayName: "Tiny (English)",
              size: "75 MiB",
-             supportedLanguages: getLanguageDictionary(isMultilingual: false),
+             supportedLanguages: getLanguageDictionary(isMultilingual: false, provider: .local),
              description: "Tiny model optimized for English, fastest, least accurate",
              speed: 0.95,
              accuracy: 0.65,
@@ -134,7 +139,7 @@ import Foundation
              name: "ggml-base.en",
              displayName: "Base (English)",
              size: "142 MiB",
-             supportedLanguages: getLanguageDictionary(isMultilingual: false),
+             supportedLanguages: getLanguageDictionary(isMultilingual: false, provider: .local),
              description: "Base model optimized for English, good balance between speed and accuracy",
              speed: 0.85,
              accuracy: 0.75,
@@ -145,7 +150,7 @@ import Foundation
              name: "ggml-large-v2",
              displayName: "Large v2",
              size: "2.9 GiB",
-             supportedLanguages: getLanguageDictionary(isMultilingual: true),
+             supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .local),
              description: "Large model v2, slower than Medium but more accurate",
              speed: 0.3,
              accuracy: 0.96,
@@ -156,7 +161,7 @@ import Foundation
              name: "ggml-large-v3",
              displayName: "Large v3",
              size: "2.9 GiB",
-             supportedLanguages: getLanguageDictionary(isMultilingual: true),
+             supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .local),
              description: "Large model v3, very slow but most accurate",
              speed: 0.3,
              accuracy: 0.98,
@@ -167,7 +172,7 @@ import Foundation
              name: "ggml-large-v3-turbo",
              displayName: "Large v3 Turbo",
              size: "1.5 GiB",
-             supportedLanguages: getLanguageDictionary(isMultilingual: true),
+             supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .local),
              description:
              "Large model v3 Turbo, faster than v3 with similar accuracy",
              speed: 0.75,
@@ -179,7 +184,7 @@ import Foundation
              name: "ggml-large-v3-turbo-q5_0",
              displayName: "Large v3 Turbo (Quantized)",
              size: "547 MiB",
-             supportedLanguages: getLanguageDictionary(isMultilingual: true),
+             supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .local),
              description: "Quantized version of Large v3 Turbo, faster with slightly lower accuracy",
              speed: 0.75,
              accuracy: 0.95,
@@ -196,7 +201,7 @@ import Foundation
             speed: 0.65,
             accuracy: 0.96,
             isMultilingual: true,
-            supportedLanguages: getLanguageDictionary(isMultilingual: true)
+            supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .groq)
         ),
         CloudModel(
            name: "scribe_v1",
@@ -206,7 +211,7 @@ import Foundation
            speed: 0.7,
            accuracy: 0.98,
            isMultilingual: true,
-           supportedLanguages: getLanguageDictionary(isMultilingual: true)
+           supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .elevenLabs)
        ),
        CloudModel(
            name: "nova-2",
@@ -216,7 +221,7 @@ import Foundation
            speed: 0.9,
            accuracy: 0.95,
            isMultilingual: true,
-           supportedLanguages: getLanguageDictionary(isMultilingual: true)
+           supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .deepgram)
        ),
      ]
  

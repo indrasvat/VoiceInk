@@ -11,6 +11,17 @@ import Speech
 class NativeAppleTranscriptionService: TranscriptionService {
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "NativeAppleTranscriptionService")
     
+    /// Maps simple language codes to Apple's BCP-47 locale format
+    private func mapToAppleLocale(_ simpleCode: String) -> String {
+        let mapping = [
+            "en": "en-US",
+            "es": "es-ES", 
+            "fr": "fr-FR",
+            "de": "de-DE"
+        ]
+        return mapping[simpleCode] ?? "en-US"
+    }
+    
     enum ServiceError: Error, LocalizedError {
         case unsupportedOS
         case transcriptionFailed
@@ -46,9 +57,10 @@ class NativeAppleTranscriptionService: TranscriptionService {
         
         let audioFile = try AVAudioFile(forReading: audioURL)
         
-        // Use the user's selected language directly, assuming BCP-47 format.
-        let selectedLanguage = UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "en-US"
-        let locale = Locale(identifier: selectedLanguage)
+        // Get the user's selected language in simple format and convert to BCP-47 format
+        let selectedLanguage = UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "en"
+        let appleLocale = mapToAppleLocale(selectedLanguage)
+        let locale = Locale(identifier: appleLocale)
 
         // Check for locale support and asset installation status.
         let supportedLocales = await SpeechTranscriber.supportedLocales
@@ -73,7 +85,7 @@ class NativeAppleTranscriptionService: TranscriptionService {
         let logMessage = """
         
         --- Native Speech Transcription ---
-        Locale: '\(locale.identifier)'
+        Selected Language: '\(selectedLanguage)' → Apple Locale: '\(locale.identifier)'
         Status: \(statusMessage)
         ------------------------------------
         Supported Locales: [\(supportedIdentifiers)]
