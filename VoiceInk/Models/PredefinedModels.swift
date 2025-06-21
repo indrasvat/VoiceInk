@@ -108,7 +108,7 @@ import Foundation
         NativeAppleModel(
             name: "apple-speech",
             displayName: "Apple Speech",
-            description: "Uses the native Apple Speech framework for transcription. Available on macOS Sonoma 14+.",
+            description: "Uses the native Apple Speech framework for transcription. Requires macOS 26.",
             isMultilingualModel: true,
             supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .nativeApple)
         ),
