@@ -308,21 +308,21 @@ class HotkeyManager: ObservableObject {
                 
                 let powerModeManager = PowerModeManager.shared
                 
-                // Only proceed if Power Mode is enabled
-                guard powerModeManager.isPowerModeEnabled else { return }
-                
-                let availableConfigurations = powerModeManager.getAllAvailableConfigurations()
-                
-                if index < availableConfigurations.count {
-                    let selectedConfig = availableConfigurations[index]
+                if powerModeManager.isPowerModeEnabled {
+                    let availableConfigurations = powerModeManager.getAllAvailableConfigurations()
+                    if index < availableConfigurations.count {
+                        let selectedConfig = availableConfigurations[index]
+                        powerModeManager.setActiveConfiguration(selectedConfig)
+                        await ActiveWindowService.shared.applyConfiguration(selectedConfig)
+                    }
+                } else {
+                    guard let enhancementService = await self.whisperState.getEnhancementService(),
+                          enhancementService.isEnhancementEnabled else { return }
                     
-                    // Set as active configuration
-                    powerModeManager.setActiveConfiguration(selectedConfig)
-                    
-                    // Apply the configuration
-                    await ActiveWindowService.shared.applyConfiguration(selectedConfig)
-                    
-                    print("🎯 Switched to Power Mode: \(selectedConfig.name) via Command+\(index + 1)")
+                    let availablePrompts = enhancementService.allPrompts
+                    if index < availablePrompts.count {
+                        enhancementService.setActivePrompt(availablePrompts[index])
+                    }
                 }
             }
         }
