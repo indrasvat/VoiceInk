@@ -154,7 +154,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 await MainActor.run {
                     NotificationManager.shared.showNotification(
                         title: "No AI Model Selected",
-                        message: "Please select a default AI model before recording.",
                         type: .error
                     )
                 }
@@ -409,8 +408,7 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             await MainActor.run {
                 if permanentURL != nil {
                     NotificationManager.shared.showNotification(
-                        title: "Transcription Failed",
-                        message: "🔄 Tap to retry transcription",
+                        title: "Transcription Failed. Tap to retry.",
                         type: .error,
                         onTap: { [weak self] in
                             Task {
@@ -421,7 +419,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 } else {
                     NotificationManager.shared.showNotification(
                         title: "Recording Failed",
-                        message: "Could not save audio file. Please try recording again.",
                         type: .error
                     )
                 }
@@ -463,7 +460,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             await MainActor.run {
                 NotificationManager.shared.showNotification(
                     title: "Transcription Successful",
-                    message: "✅ Retry completed successfully",
                     type: .success
                 )
                 
@@ -479,7 +475,6 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             await MainActor.run {
                 NotificationManager.shared.showNotification(
                     title: "Retry Failed",
-                    message: "Transcription failed again. Check your model and settings.",
                     type: .error
                 )
             }

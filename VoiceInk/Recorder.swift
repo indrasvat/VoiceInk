@@ -71,8 +71,7 @@ class Recorder: ObservableObject {
             if let deviceName = deviceManager.availableDevices.first(where: { $0.id == currentDeviceID })?.name {
                 await MainActor.run {
                     NotificationManager.shared.showNotification(
-                        title: "Audio Input Source",
-                        message: "Using: \(deviceName)",
+                        title: "Using: \(deviceName)",
                         type: .info
                     )
                 }
@@ -126,7 +125,7 @@ class Recorder: ObservableObject {
             }
             
             audioLevelCheckTask = Task {
-                try? await Task.sleep(nanoseconds: 5_000_000_000)
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
                 
                 if Task.isCancelled { return }
                 
@@ -134,7 +133,6 @@ class Recorder: ObservableObject {
                     await MainActor.run {
                         NotificationManager.shared.showNotification(
                             title: "No Audio Detected",
-                            message: "Is your microphone muted? Please check your audio input settings.",
                             type: .warning
                         )
                     }
