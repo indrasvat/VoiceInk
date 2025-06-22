@@ -367,10 +367,8 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
             text += " "
 
             SoundManager.shared.playStopSound()
-            if AXIsProcessTrusted() {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    CursorPaster.pasteAtCursor(text, shouldPreserveClipboard: !self.isAutoCopyEnabled)
-                }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                CursorPaster.pasteAtCursor(text, shouldPreserveClipboard: !self.isAutoCopyEnabled)
             }
             try? FileManager.default.removeItem(at: url)
             
@@ -464,10 +462,8 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 )
                 
                 let textToPaste = newTranscription.enhancedText ?? newTranscription.text
-                if AXIsProcessTrusted() {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        CursorPaster.pasteAtCursor(textToPaste + " ", shouldPreserveClipboard: !self.isAutoCopyEnabled)
-                    }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    CursorPaster.pasteAtCursor(textToPaste + " ", shouldPreserveClipboard: !self.isAutoCopyEnabled)
                 }
             }
             
