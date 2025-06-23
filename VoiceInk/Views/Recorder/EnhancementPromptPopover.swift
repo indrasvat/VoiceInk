@@ -49,6 +49,9 @@ struct EnhancementPromptPopover: View {
             // Set the initially selected prompt
             selectedPrompt = enhancementService.activePrompt
         }
+        .onChange(of: enhancementService.selectedPromptId) { oldValue, newValue in
+            selectedPrompt = enhancementService.activePrompt
+        }
     }
 }
 

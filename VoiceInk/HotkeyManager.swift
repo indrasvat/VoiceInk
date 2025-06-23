@@ -316,11 +316,14 @@ class HotkeyManager: ObservableObject {
                         await ActiveWindowService.shared.applyConfiguration(selectedConfig)
                     }
                 } else {
-                    guard let enhancementService = await self.whisperState.getEnhancementService(),
-                          enhancementService.isEnhancementEnabled else { return }
+                    guard let enhancementService = await self.whisperState.getEnhancementService() else { return }
                     
                     let availablePrompts = enhancementService.allPrompts
                     if index < availablePrompts.count {
+                        if !enhancementService.isEnhancementEnabled {
+                            enhancementService.isEnhancementEnabled = true
+                        }
+                        
                         enhancementService.setActivePrompt(availablePrompts[index])
                     }
                 }
