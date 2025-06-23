@@ -380,7 +380,8 @@ struct ConfigurationView: View {
                                     }
                                 }
                                 .labelsHidden()
-                                .frame(maxWidth: .infinity)
+
+                                Spacer()
                             }
                         }
                         
@@ -412,7 +413,8 @@ struct ConfigurationView: View {
                                     }
                                 }
                                 .labelsHidden()
-                                .frame(maxWidth: .infinity)
+
+                                Spacer()
                             }
                         } else if let selectedModel = effectiveModelName,
                                   let modelInfo = whisperState.allAvailableModels.first(where: { $0.name == selectedModel }),
@@ -492,7 +494,6 @@ struct ConfigurationView: View {
                                         }
                                     }
                                     .labelsHidden()
-                                    .frame(maxWidth: .infinity)
                                     .onChange(of: selectedAIProvider) { oldValue, newValue in
                                         // When provider changes, ensure we have a valid model for that provider
                                         if let provider = newValue.flatMap({ AIProvider(rawValue: $0) }) {
@@ -500,6 +501,7 @@ struct ConfigurationView: View {
                                             selectedAIModel = provider.defaultModel
                                         }
                                     }
+                                    Spacer()
                                 }
                             }
                             
@@ -543,7 +545,8 @@ struct ConfigurationView: View {
                                             }
                                         }
                                         .labelsHidden()
-                                        .frame(maxWidth: .infinity)
+
+                                        Spacer()
                                     }
                                 }
                             }
