@@ -125,11 +125,17 @@ class Recorder: ObservableObject {
             }
             
             audioLevelCheckTask = Task {
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
-                
-                if Task.isCancelled { return }
-                
-                if !self.hasDetectedAudioInCurrentSession {
+                let notificationChecks: [TimeInterval] = [2.0, 8.0]
+
+                for delay in notificationChecks {
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+
+                    if Task.isCancelled { return }
+
+                    if self.hasDetectedAudioInCurrentSession {
+                        return
+                    }
+
                     await MainActor.run {
                         NotificationManager.shared.showNotification(
                             title: "No Audio Detected",
