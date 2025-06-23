@@ -706,21 +706,29 @@ struct ConfigurationView: View {
     
     private func loadInstalledApps() {
         // Get both user-installed and system applications
-        let userAppURLs = FileManager.default.urls(for: .applicationDirectory, in: .localDomainMask)
+        let userAppURLs = FileManager.default.urls(for: .applicationDirectory, in: .userDomainMask)
+        let localAppURLs = FileManager.default.urls(for: .applicationDirectory, in: .localDomainMask)
         let systemAppURLs = FileManager.default.urls(for: .applicationDirectory, in: .systemDomainMask)
-        let allAppURLs = userAppURLs + systemAppURLs
+        let allAppURLs = userAppURLs + localAppURLs + systemAppURLs
         
         let apps = allAppURLs.flatMap { baseURL -> [URL] in
             let enumerator = FileManager.default.enumerator(
                 at: baseURL,
-                includingPropertiesForKeys: [.isApplicationKey],
-                options: [.skipsHiddenFiles, .skipsPackageDescendants]
+                includingPropertiesForKeys: [.isApplicationKey, .isDirectoryKey],
+                options: [.skipsHiddenFiles]
             )
             
             return enumerator?.compactMap { item -> URL? in
-                guard let url = item as? URL,
-                      url.pathExtension == "app" else { return nil }
-                return url
+                guard let url = item as? URL else { return nil }
+                
+                // If it's an app, return it and skip descending into it
+                if url.pathExtension == "app" {
+                    enumerator?.skipDescendants()
+                    return url
+                }
+                
+                // Continue searching in directories
+                return nil
             } ?? []
         }
         
