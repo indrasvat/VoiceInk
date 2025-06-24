@@ -33,7 +33,7 @@ import Foundation
         } else {
             // For Apple Native models, return only supported languages in simple format
             if provider == .nativeApple {
-                let appleSupportedCodes = ["en", "es", "fr", "de"]
+                let appleSupportedCodes = ["ar", "de", "en", "es", "fr", "it", "ja", "ko", "pt", "yue", "zh"]
                 return allLanguages.filter { appleSupportedCodes.contains($0.key) }
             }
             return allLanguages

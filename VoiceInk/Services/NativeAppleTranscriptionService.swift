@@ -17,7 +17,14 @@ class NativeAppleTranscriptionService: TranscriptionService {
             "en": "en-US",
             "es": "es-ES", 
             "fr": "fr-FR",
-            "de": "de-DE"
+            "de": "de-DE",
+            "ar": "ar-SA",
+            "it": "it-IT",
+            "ja": "ja-JP",
+            "ko": "ko-KR",
+            "pt": "pt-BR",
+            "yue": "yue-CN",
+            "zh": "zh-CN"
         ]
         return mapping[simpleCode] ?? "en-US"
     }
