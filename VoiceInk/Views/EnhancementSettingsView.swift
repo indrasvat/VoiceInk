@@ -81,6 +81,7 @@ struct EnhancementSettingsView: View {
                     .padding()
                     .background(Color(.windowBackgroundColor).opacity(0.4))
                     .cornerRadius(10)
+                    .opacity(enhancementService.isEnhancementEnabled ? 1.0 : 0.6)
                     
                     // 3. Enhancement Modes & Assistant Section
                     VStack(alignment: .leading, spacing: 16) {
@@ -110,6 +111,7 @@ struct EnhancementSettingsView: View {
                     .padding()
                     .background(Color(.windowBackgroundColor).opacity(0.4))
                     .cornerRadius(10)
+                    .opacity(enhancementService.isEnhancementEnabled ? 1.0 : 0.6)
                 }
             }
             .padding(24)

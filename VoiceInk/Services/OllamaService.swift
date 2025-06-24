@@ -52,10 +52,7 @@ class OllamaService: ObservableObject {
     
     init() {
         self.baseURL = UserDefaults.standard.string(forKey: "ollamaBaseURL") ?? Self.defaultBaseURL
-        self.selectedModel = UserDefaults.standard.string(forKey: "ollamaSelectedModel") ?? "llama2"
-        
-        // Note: Removed automatic initialization to prevent startup delays
-        // Connection check and model refresh will be called when actually needed
+        self.selectedModel = UserDefaults.standard.string(forKey: "ollamaSelectedModel") ?? "llama2"        
     }
     
     @MainActor
