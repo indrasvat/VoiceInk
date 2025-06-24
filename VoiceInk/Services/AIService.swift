@@ -7,11 +7,13 @@ enum AIProvider: String, CaseIterable {
     case deepSeek = "DeepSeek"
     case gemini = "Gemini"
     case anthropic = "Anthropic"
+    case openRouter = "OpenRouter"
     case mistral = "Mistral"
     case ollama = "Ollama"
     case elevenLabs = "ElevenLabs"
     case deepgram = "Deepgram"
     case custom = "Custom"
+    
     
     var baseURL: String {
         switch self {
@@ -25,6 +27,8 @@ enum AIProvider: String, CaseIterable {
             return "https://generativelanguage.googleapis.com/v1beta/models"
         case .anthropic:
             return "https://api.anthropic.com/v1/messages"
+        case .openRouter:
+            return "https://openrouter.ai/api/v1/chat/completions"
         case .mistral:
             return "https://api.mistral.ai/v1/chat/completions"
         case .elevenLabs:
@@ -35,6 +39,7 @@ enum AIProvider: String, CaseIterable {
             return "https://api.deepgram.com/v1/listen"
         case .custom:
             return UserDefaults.standard.string(forKey: "customProviderBaseURL") ?? ""
+        
         }
     }
     
@@ -60,6 +65,8 @@ enum AIProvider: String, CaseIterable {
             return "whisper-1"
         case .custom:
             return UserDefaults.standard.string(forKey: "customProviderModel") ?? ""
+        case .openRouter:
+            return "openai/gpt-4o"
         }
     }
     
@@ -106,6 +113,8 @@ enum AIProvider: String, CaseIterable {
         case .deepgram:
             return ["whisper-1"]
         case .custom:
+            return []
+        case .openRouter:
             return []
         }
     }
@@ -163,6 +172,8 @@ class AIService: ObservableObject {
     private let userDefaults = UserDefaults.standard
     private lazy var ollamaService = OllamaService()
     
+    private var openRouterModels: [String] = []
+    
     var connectedProviders: [AIProvider] {
         AIProvider.allCases.filter { provider in
             if provider == .ollama {
@@ -186,6 +197,8 @@ class AIService: ObservableObject {
     var availableModels: [String] {
         if selectedProvider == .ollama {
             return ollamaService.availableModels.map { $0.name }
+        } else if selectedProvider == .openRouter {
+            return openRouterModels
         }
         return selectedProvider.availableModels
     }
@@ -205,7 +218,6 @@ class AIService: ObservableObject {
             }
         } else {
             self.isAPIKeyValid = true
-          
         }
         
         loadSavedModelSelections()
@@ -451,14 +463,6 @@ class AIService: ObservableObject {
     }
     
     func enhanceWithOllama(text: String, systemPrompt: String) async throws -> String {
-        // Ensure connection is established before attempting enhancement
-        if !ollamaService.isConnected {
-            await ollamaService.checkConnection()
-            if ollamaService.isConnected && ollamaService.availableModels.isEmpty {
-                await ollamaService.refreshModels()
-            }
-        }
-        
         logger.notice("🔄 Sending transcription to Ollama for enhancement (model: \(self.ollamaService.selectedModel))")
         do {
             let result = try await ollamaService.enhance(text, withSystemPrompt: systemPrompt)
@@ -479,8 +483,57 @@ class AIService: ObservableObject {
         ollamaService.selectedModel = modelName
         userDefaults.set(modelName, forKey: "ollamaSelectedModel")
     }
+    
+    func fetchOpenRouterModels() async {
+        let url = URL(string: "https://openrouter.ai/api/v1/models")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                logger.error("Failed to fetch OpenRouter models: Invalid HTTP response")
+                await MainActor.run { 
+                    self.openRouterModels = []
+                    self.objectWillChange.send()
+                }
+                return
+            }
+            
+            guard let jsonResponse = try? JSONSerialization.jsonObject(with: data) as? [String: Any], 
+                  let dataArray = jsonResponse["data"] as? [[String: Any]] else {
+                logger.error("Failed to parse OpenRouter models JSON")
+                await MainActor.run { 
+                    self.openRouterModels = []
+                    self.objectWillChange.send()
+                }
+                return
+            }
+            
+            let models = dataArray.compactMap { $0["id"] as? String }
+            await MainActor.run { 
+                self.openRouterModels = models.sorted()
+                if self.selectedProvider == .openRouter && self.currentModel == self.selectedProvider.defaultModel && !models.isEmpty {
+                    self.selectModel(models.sorted().first!)
+                }
+                self.objectWillChange.send()
+            }
+            logger.info("Successfully fetched \(models.count) OpenRouter models.")
+            
+        } catch {
+            logger.error("Error fetching OpenRouter models: \(error.localizedDescription)")
+            await MainActor.run { 
+                self.openRouterModels = []
+                self.objectWillChange.send()
+            }
+        }
+    }
 }
 
 extension Notification.Name {
     static let aiProviderKeyChanged = Notification.Name("aiProviderKeyChanged")
 } 
+
+

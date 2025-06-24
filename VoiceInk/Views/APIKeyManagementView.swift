@@ -52,6 +52,10 @@ struct APIKeyManagementView: View {
             .onChange(of: aiService.selectedProvider) { oldValue, newValue in
                 if aiService.selectedProvider == .ollama {
                     checkOllamaConnection()
+                } else if aiService.selectedProvider == .openRouter {
+                    Task {
+                        await aiService.fetchOpenRouterModels()
+                    }
                 }
             }
             
@@ -59,12 +63,26 @@ struct APIKeyManagementView: View {
             if !aiService.availableModels.isEmpty && 
                aiService.selectedProvider != .ollama && 
                aiService.selectedProvider != .custom {
-                Picker("Model", selection: Binding(
-                    get: { aiService.currentModel },
-                    set: { aiService.selectModel($0) }
-                )) {
-                    ForEach(aiService.availableModels, id: \.self) { model in
-                        Text(model).tag(model)
+                HStack {
+                    Picker("Model", selection: Binding(
+                        get: { aiService.currentModel },
+                        set: { aiService.selectModel($0) }
+                    )) {
+                        ForEach(aiService.availableModels, id: \.self) { model in
+                            Text(model).tag(model)
+                        }
+                    }
+                    
+                    if aiService.selectedProvider == .openRouter {
+                        Button(action: {
+                            Task {
+                                await aiService.fetchOpenRouterModels()
+                            }
+                        }) {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Refresh models")
                     }
                 }
             }
@@ -200,6 +218,7 @@ struct APIKeyManagementView: View {
                 .padding()
                 .background(Color.secondary.opacity(0.03))
                 .cornerRadius(12)
+
             } else if aiService.selectedProvider == .custom {
                 VStack(alignment: .leading, spacing: 16) {
                     // Header
@@ -391,6 +410,8 @@ struct APIKeyManagementView: View {
                                             URL(string: "https://console.deepgram.com/api-keys")!
                                         case .ollama, .custom:
                                             URL(string: "")! // This case should never be reached
+                                        case .openRouter:
+                                            URL(string: "https://openrouter.ai/keys")!
                                         }
                                         NSWorkspace.shared.open(url)
                                     } label: {
@@ -419,6 +440,10 @@ struct APIKeyManagementView: View {
         .onAppear {
             if aiService.selectedProvider == .ollama {
                 checkOllamaConnection()
+            } else if aiService.selectedProvider == .openRouter {
+                Task {
+                    await aiService.fetchOpenRouterModels()
+                }
             }
         }
     }

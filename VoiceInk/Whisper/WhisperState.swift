@@ -336,13 +336,23 @@ class WhisperState: NSObject, ObservableObject, AVAudioRecorderDelegate {
                     try? modelContext.save()
                     text = enhancedText
                 } catch {
+                    // Enhancement failed - save error in enhancedText field and show notification
                     let newTranscription = Transcription(
                         text: originalText,
                         duration: actualDuration,
+                        enhancedText: "Enhancement failed: \(error.localizedDescription)",
                         audioFileURL: permanentURL?.absoluteString
                     )
                     modelContext.insert(newTranscription)
                     try? modelContext.save()
+                    
+                    // Show notification about enhancement failure
+                    await MainActor.run {
+                        NotificationManager.shared.showNotification(
+                            title: "AI enhancement failed",
+                            type: .error
+                        )
+                    }
                 }
             } else {
                 let newTranscription = Transcription(
