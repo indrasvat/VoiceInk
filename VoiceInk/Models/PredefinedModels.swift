@@ -10,6 +10,11 @@ import Foundation
                 let appleSupportedCodes = ["ar", "de", "en", "es", "fr", "it", "ja", "ko", "pt", "yue", "zh"]
                 return allLanguages.filter { appleSupportedCodes.contains($0.key) }
             }
+            // For Streaming models (SFSpeechRecognizer), return supported languages
+            if provider == .streaming {
+                let streamingSupportedCodes = ["ar", "ca", "cs", "da", "de", "el", "en", "es", "fi", "fr", "he", "hi", "hr", "hu", "id", "it", "ja", "ko", "ms", "nb", "nl", "pl", "pt", "ro", "ru", "sk", "sv", "th", "tr", "uk", "vi", "yue", "zh"]
+                return allLanguages.filter { streamingSupportedCodes.contains($0.key) }
+            }
             return allLanguages
         }
     }
@@ -78,6 +83,15 @@ import Foundation
     }
     
     private static let predefinedModels: [any TranscriptionModel] = [
+        // Streaming Model (Apple Live) - Real-time transcription
+        StreamingModel(
+            name: "apple-live-speech",
+            displayName: "Apple Live",
+            description: "Real-time streaming transcription with instant results. Uses Apple's Speech framework with on-device recognition for privacy. Best for short utterances.",
+            isMultilingualModel: true,
+            supportedLanguages: getLanguageDictionary(isMultilingual: true, provider: .streaming)
+        ),
+
         // Native Apple Model
         NativeAppleModel(
             name: "apple-speech",

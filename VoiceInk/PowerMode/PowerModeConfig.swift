@@ -119,21 +119,30 @@ struct AppConfig: Codable, Identifiable, Equatable {
 struct URLConfig: Codable, Identifiable, Equatable {
     let id: UUID
     var url: String
-    
+
     init(id: UUID = UUID(), url: String) {
         self.id = id
         self.url = url
     }
-    
+
     static func == (lhs: URLConfig, rhs: URLConfig) -> Bool {
         lhs.id == rhs.id
     }
+}
+
+struct MalformedPowerModeConfig: Identifiable {
+    let id = UUID()
+    let name: String?
+    let rawId: String?
+    let errorDescription: String
+    let originalIndex: Int  // Index in raw JSON array for removal
 }
 
 class PowerModeManager: ObservableObject {
     static let shared = PowerModeManager()
     @Published var configurations: [PowerModeConfig] = []
     @Published var activeConfiguration: PowerModeConfig?
+    @Published var malformedConfigs: [MalformedPowerModeConfig] = []
 
     private let configKey = "powerModeConfigurationsV2"
     private let activeConfigIdKey = "activeConfigurationId"
@@ -150,17 +159,101 @@ class PowerModeManager: ObservableObject {
     }
 
     private func loadConfigurations() {
-        if let data = UserDefaults.standard.data(forKey: configKey),
-           let configs = try? JSONDecoder().decode([PowerModeConfig].self, from: data) {
+        guard let data = UserDefaults.standard.data(forKey: configKey) else { return }
+
+        // First try batch decode (fast path for valid data)
+        if let configs = try? JSONDecoder().decode([PowerModeConfig].self, from: data) {
             configurations = configs
+            malformedConfigs = []
+            return
         }
+
+        // If batch decode fails, parse individually to salvage valid configs
+        guard let jsonArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            malformedConfigs = [MalformedPowerModeConfig(name: nil, rawId: nil, errorDescription: "Power Mode data is corrupted", originalIndex: -1)]
+            return
+        }
+
+        var validConfigs: [PowerModeConfig] = []
+        var invalidConfigs: [MalformedPowerModeConfig] = []
+
+        for (index, jsonDict) in jsonArray.enumerated() {
+            let name = jsonDict["name"] as? String
+            let rawId = jsonDict["id"] as? String
+
+            do {
+                let itemData = try JSONSerialization.data(withJSONObject: jsonDict)
+                let config = try JSONDecoder().decode(PowerModeConfig.self, from: itemData)
+                validConfigs.append(config)
+            } catch {
+                let errorDesc: String
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .dataCorrupted(let context):
+                        errorDesc = context.debugDescription
+                    case .keyNotFound(let key, _):
+                        errorDesc = "Missing required field: \(key.stringValue)"
+                    case .typeMismatch(let type, let context):
+                        errorDesc = "Type mismatch for \(context.codingPath.last?.stringValue ?? "unknown"): expected \(type)"
+                    case .valueNotFound(let type, let context):
+                        errorDesc = "Missing value for \(context.codingPath.last?.stringValue ?? "unknown"): expected \(type)"
+                    @unknown default:
+                        errorDesc = error.localizedDescription
+                    }
+                } else {
+                    errorDesc = error.localizedDescription
+                }
+
+                invalidConfigs.append(MalformedPowerModeConfig(
+                    name: name ?? "Config #\(index + 1)",
+                    rawId: rawId,
+                    errorDescription: errorDesc,
+                    originalIndex: index
+                ))
+            }
+        }
+
+        configurations = validConfigs
+        malformedConfigs = invalidConfigs
     }
 
     func saveConfigurations() {
         if let data = try? JSONEncoder().encode(configurations) {
             UserDefaults.standard.set(data, forKey: configKey)
         }
+        // Clear malformed configs after saving valid data (they're now removed)
+        malformedConfigs = []
         NotificationCenter.default.post(name: NSNotification.Name("PowerModeConfigurationsDidChange"), object: nil)
+    }
+
+    func dismissMalformedConfigs() {
+        malformedConfigs = []
+        // Re-save to remove malformed entries from storage
+        saveConfigurations()
+    }
+
+    func removeMalformedConfig(_ config: MalformedPowerModeConfig) {
+        // Remove from the raw data by re-reading and filtering
+        guard let data = UserDefaults.standard.data(forKey: configKey),
+              var jsonArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            malformedConfigs.removeAll { $0.id == config.id }
+            return
+        }
+
+        // Remove by rawId if available, otherwise by original index
+        if let rawId = config.rawId {
+            jsonArray.removeAll { ($0["id"] as? String) == rawId }
+        } else if config.originalIndex < jsonArray.count {
+            jsonArray.remove(at: config.originalIndex)
+        }
+
+        // Write back
+        if let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray) {
+            UserDefaults.standard.set(jsonData, forKey: configKey)
+        }
+
+        // Remove from local list
+        malformedConfigs.removeAll { $0.id == config.id }
     }
 
     func addConfiguration(_ config: PowerModeConfig) {

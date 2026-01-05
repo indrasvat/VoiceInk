@@ -17,6 +17,9 @@ class Recorder: NSObject, ObservableObject {
     private var audioMeterUpdateTask: Task<Void, Never>?
     private var audioRestorationTask: Task<Void, Never>?
     private var hasDetectedAudioInCurrentSession = false
+
+    /// Callback for streaming audio buffers to speech recognition service
+    var onAudioBufferForStreaming: ((AVAudioPCMBuffer) -> Void)?
     
     enum RecorderError: Error {
         case couldNotStartRecording
@@ -92,6 +95,12 @@ class Recorder: NSObject, ObservableObject {
                 }
             }
 
+            // Set up streaming callback - use closure to dynamically reference the callback
+            // so it picks up changes made after startRecording() is called
+            engineRecorder.onAudioBufferForStreaming = { [weak self] buffer in
+                self?.onAudioBufferForStreaming?(buffer)
+            }
+
             try engineRecorder.startRecording(toOutputFile: url)
 
             logger.info("✅ AudioEngineRecorder started successfully")
@@ -148,6 +157,7 @@ class Recorder: NSObject, ObservableObject {
         audioMeterUpdateTask?.cancel()
         recorder?.stopRecording()
         recorder = nil
+        onAudioBufferForStreaming = nil
         audioMeter = AudioMeter(averagePower: 0, peakPower: 0)
 
         audioRestorationTask = Task {

@@ -9,18 +9,24 @@ class LicenseViewModel: ObservableObject {
         case licensed
     }
     
-    @Published private(set) var licenseState: LicenseState = .trial(daysRemaining: 7)  // Default to trial
+    #if LOCAL_BUILD
+    @Published private(set) var licenseState: LicenseState = .licensed
+    #else
+    @Published private(set) var licenseState: LicenseState = .trial(daysRemaining: 7)
+    #endif
     @Published var licenseKey: String = ""
     @Published var isValidating = false
     @Published var validationMessage: String?
     @Published private(set) var activationsLimit: Int = 0
-    
+
     private let trialPeriodDays = 7
     private let polarService = PolarService()
     private let userDefaults = UserDefaults.standard
-    
+
     init() {
+        #if !LOCAL_BUILD
         loadLicenseState()
+        #endif
     }
     
     func startTrial() {
@@ -71,12 +77,16 @@ class LicenseViewModel: ObservableObject {
     }
     
     var canUseApp: Bool {
+        #if LOCAL_BUILD
+        return true
+        #else
         switch licenseState {
         case .licensed, .trial:
             return true
         case .trialExpired:
             return false
         }
+        #endif
     }
     
     func openPurchaseLink() {

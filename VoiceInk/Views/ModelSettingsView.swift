@@ -7,6 +7,12 @@ struct ModelSettingsView: View {
     @AppStorage("IsVADEnabled") private var isVADEnabled = true
     @AppStorage("AppendTrailingSpace") private var appendTrailingSpace = true
     @AppStorage("PrewarmModelOnWake") private var prewarmModelOnWake = true
+
+    // VAD timing configuration (lower values = faster response, higher = better noise filtering)
+    @AppStorage("VADMinSpeechDurationMs") private var vadMinSpeechDurationMs: Int = 50
+    @AppStorage("VADMinSilenceDurationMs") private var vadMinSilenceDurationMs: Int = 80
+    @AppStorage("VADSpeechPadMs") private var vadSpeechPadMs: Int = 100
+
     @State private var customPrompt: String = ""
     @State private var isEditing: Bool = false
     
@@ -102,6 +108,82 @@ struct ModelSettingsView: View {
                     title: "Voice Activity Detection",
                     message: "Detect speech segments and filter out silence to improve accuracy of local models."
                 )
+            }
+
+            // VAD timing sliders (only shown when VAD is enabled)
+            if isVADEnabled {
+                VStack(alignment: .leading, spacing: 8) {
+                    // Min speech duration slider
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Min speech duration")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(vadMinSpeechDurationMs) ms")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .monospacedDigit()
+                        }
+                        Slider(
+                            value: Binding(
+                                get: { Double(vadMinSpeechDurationMs) },
+                                set: { vadMinSpeechDurationMs = Int($0) }
+                            ),
+                            in: 10...500,
+                            step: 10
+                        )
+                    }
+
+                    // Min silence duration slider
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Min silence duration")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(vadMinSilenceDurationMs) ms")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .monospacedDigit()
+                        }
+                        Slider(
+                            value: Binding(
+                                get: { Double(vadMinSilenceDurationMs) },
+                                set: { vadMinSilenceDurationMs = Int($0) }
+                            ),
+                            in: 20...500,
+                            step: 10
+                        )
+                    }
+
+                    // Speech padding slider
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Speech padding")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(vadSpeechPadMs) ms")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .monospacedDigit()
+                        }
+                        Slider(
+                            value: Binding(
+                                get: { Double(vadSpeechPadMs) },
+                                set: { vadSpeechPadMs = Int($0) }
+                            ),
+                            in: 10...300,
+                            step: 10
+                        )
+                    }
+
+                    Text("Lower values = faster response for short utterances. Higher values = better noise filtering.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.leading, 16)
             }
 
             HStack {

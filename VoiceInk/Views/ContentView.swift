@@ -2,6 +2,12 @@ import SwiftUI
 import SwiftData
 import KeyboardShortcuts
 
+#if LOCAL_BUILD
+private let appIconName = "AppIcon-Dev"
+#else
+private let appIconName = "AppIcon"
+#endif
+
 // ViewType enum with all cases
 enum ViewType: String, CaseIterable, Identifiable {
     case metrics = "Dashboard"
@@ -78,7 +84,7 @@ struct ContentView: View {
                 Section {
                     // App Header
                     HStack(spacing: 6) {
-                        if let appIcon = NSImage(named: "AppIcon") {
+                        if let appIcon = NSImage(named: appIconName) {
                             Image(nsImage: appIcon)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)

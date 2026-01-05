@@ -32,12 +32,13 @@ class ParakeetTranscriptionService: TranscriptionService {
 
         cleanup()
 
-        // Validate models before loading
-        let isValid = try await AsrModels.isModelValid(version: version)
+        // Check if models exist before loading
+        let cacheDir = AsrModels.defaultCacheDirectory(for: version)
+        let modelsExist = AsrModels.modelsExist(at: cacheDir, version: version)
 
-        if !isValid {
-            logger.error("Model validation failed for \(version == .v2 ? "v2" : "v3"). Models are corrupted.")
-            throw ParakeetTranscriptionError.modelValidationFailed("Parakeet models are corrupted. Please delete and re-download the model.")
+        if !modelsExist {
+            logger.error("Models not found for \(version == .v2 ? "v2" : "v3") at \(cacheDir.path)")
+            throw ParakeetTranscriptionError.modelValidationFailed("Parakeet models not found. Please download the model first.")
         }
 
         let manager = AsrManager(config: .default)

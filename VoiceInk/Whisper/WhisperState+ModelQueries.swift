@@ -35,6 +35,9 @@ extension WhisperState {
             case .custom:
                 // Custom models are always usable since they contain their own API keys
                 return true
+            case .streaming:
+                // Streaming uses system SFSpeechRecognizer, always available (permission handled in UI)
+                return true
             }
         }
     }

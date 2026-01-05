@@ -5,9 +5,14 @@ import AppKit
 struct ParakeetModelCardRowView: View {
     let model: ParakeetModel
     @ObservedObject var whisperState: WhisperState
+    @State private var isStreamingEnabled: Bool = true
 
     var isCurrent: Bool {
         whisperState.currentTranscriptionModel?.name == model.name
+    }
+
+    private var streamingModeKey: String {
+        "StreamingMode_\(model.name)"
     }
 
     var isDownloaded: Bool {
@@ -23,15 +28,33 @@ struct ParakeetModelCardRowView: View {
             VStack(alignment: .leading, spacing: 6) {
                 headerSection
                 metadataSection
+                if isDownloaded {
+                    streamingToggleSection
+                }
                 descriptionSection
                 progressSection
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             actionSection
         }
         .padding(16)
         .background(CardBackground(isSelected: isCurrent, useAccentGradientWhenSelected: isCurrent))
+        .onAppear {
+            loadStreamingPreference()
+        }
+    }
+
+    private func loadStreamingPreference() {
+        if UserDefaults.standard.object(forKey: streamingModeKey) == nil {
+            isStreamingEnabled = true  // Default to streaming enabled
+        } else {
+            isStreamingEnabled = UserDefaults.standard.bool(forKey: streamingModeKey)
+        }
+    }
+
+    private func saveStreamingPreference(_ enabled: Bool) {
+        UserDefaults.standard.set(enabled, forKey: streamingModeKey)
     }
 
     private var headerSection: some View {
@@ -99,6 +122,32 @@ struct ParakeetModelCardRowView: View {
             .lineLimit(2)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.top, 4)
+    }
+
+    private var streamingToggleSection: some View {
+        HStack(spacing: 8) {
+            Toggle(isOn: Binding(
+                get: { isStreamingEnabled },
+                set: { newValue in
+                    isStreamingEnabled = newValue
+                    saveStreamingPreference(newValue)
+                }
+            )) {
+                HStack(spacing: 4) {
+                    Image(systemName: "waveform")
+                        .font(.system(size: 10))
+                    Text(isStreamingEnabled ? "Streaming Mode" : "Batch Mode")
+                        .font(.system(size: 11, weight: .medium))
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+
+            Text(isStreamingEnabled ? "Real-time transcription" : "Full audio processing")
+                .font(.system(size: 10))
+                .foregroundColor(Color(.tertiaryLabelColor))
+        }
+        .padding(.top, 4)
     }
 
     private var progressSection: some View {

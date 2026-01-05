@@ -73,6 +73,9 @@ fastlane/test_output
 
 iOSInjectionProject/
 
+# Local whisper.cpp framework (built via make whisper)
+whisper.xcframework/
+
 # macOS
 .DS_Store
 .AppleDouble

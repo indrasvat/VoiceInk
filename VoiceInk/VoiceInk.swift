@@ -6,6 +6,12 @@ import OSLog
 import AppIntents
 import FluidAudio
 
+#if LOCAL_BUILD
+private let menuBarIconName = "menuBarIcon-Dev"
+#else
+private let menuBarIconName = "menuBarIcon"
+#endif
+
 @main
 struct VoiceInkApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -298,7 +304,7 @@ struct VoiceInkApp: App {
                 $0.size.height = 22
                 $0.size.width = 22 / ratio
                 return $0
-            }(NSImage(named: "menuBarIcon")!)
+            }(NSImage(named: menuBarIconName)!)
 
             Image(nsImage: image)
         }

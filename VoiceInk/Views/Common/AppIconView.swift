@@ -1,5 +1,11 @@
 import SwiftUI
 
+#if LOCAL_BUILD
+private let appIconName = "AppIcon-Dev"
+#else
+private let appIconName = "AppIcon"
+#endif
+
 struct AppIconView: View {
     var body: some View {
         ZStack {
@@ -7,8 +13,8 @@ struct AppIconView: View {
                 .fill(Color.accentColor.opacity(0.15))
                 .frame(width: 160, height: 160)
                 .blur(radius: 30)
-            
-            if let image = NSImage(named: "AppIcon") {
+
+            if let image = NSImage(named: appIconName) {
                 Image(nsImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -22,4 +28,4 @@ struct AppIconView: View {
             }
         }
     }
-} 
+}

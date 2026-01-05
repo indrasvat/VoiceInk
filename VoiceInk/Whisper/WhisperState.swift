@@ -140,6 +140,12 @@ class WhisperState: NSObject, ObservableObject {
     
     func toggleRecord(powerModeId: UUID? = nil) async {
         if recordingState == .recording {
+            // For streaming models, get the result before stopping the recorder
+            var streamingResult: String? = nil
+            if isCurrentModelStreaming {
+                streamingResult = await stopStreamingRecognition()
+            }
+
             await recorder.stopRecording()
             if let recordedFile {
                 if !shouldCancelRecording {
@@ -156,7 +162,12 @@ class WhisperState: NSObject, ObservableObject {
                     try? modelContext.save()
                     NotificationCenter.default.post(name: .transcriptionCreated, object: transcription)
 
-                    await transcribeAudio(on: transcription)
+                    // For streaming models with a valid result, use it directly
+                    if let streamingText = streamingResult, !streamingText.isEmpty {
+                        await processStreamingResult(streamingText, on: transcription)
+                    } else {
+                        await transcribeAudio(on: transcription)
+                    }
                 } else {
                     await MainActor.run {
                         recordingState = .idle
@@ -184,10 +195,24 @@ class WhisperState: NSObject, ObservableObject {
                 if granted {
                     Task {
                         do {
+                            // --- Pre-load streaming if needed (BEFORE recording starts) ---
+                            let streamingReady = await self.setupStreamingIfNeeded()
+                            guard streamingReady else {
+                                self.logger.error("Failed to setup streaming - aborting recording")
+                                return
+                            }
+
                             // --- Prepare permanent file URL ---
                             let fileName = "\(UUID().uuidString).wav"
                             let permanentURL = self.recordingsDirectory.appendingPathComponent(fileName)
                             self.recordedFile = permanentURL
+
+                            // CRITICAL: Start streaming BEFORE recording so callback is connected
+                            // when audio tap begins generating buffers.
+                            // MUST AWAIT to ensure streaming manager exists before audio starts!
+                            if self.isCurrentModelStreaming {
+                                await self.startStreamingRecognition()
+                            }
 
                             try await self.recorder.startRecording(toOutputFile: permanentURL)
 

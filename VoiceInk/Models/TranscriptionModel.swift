@@ -1,5 +1,12 @@
 import Foundation
 
+// Enum to describe streaming capability of a model
+enum StreamingCapability: String, Codable {
+    case batchOnly         // Model only supports batch transcription (Whisper, most cloud)
+    case streamingOnly     // Model only supports streaming (Apple Live)
+    case batchAndStreaming // Model supports both modes (Parakeet with streaming branch)
+}
+
 // Enum to differentiate between model providers
 enum ModelProvider: String, Codable, Hashable, CaseIterable {
     case local = "Local"
@@ -12,7 +19,7 @@ enum ModelProvider: String, Codable, Hashable, CaseIterable {
     case soniox = "Soniox"
     case custom = "Custom"
     case nativeApple = "Native Apple"
-    // Future providers can be added here
+    case streaming = "Streaming"
 }
 
 // A unified protocol for any transcription model
@@ -22,19 +29,27 @@ protocol TranscriptionModel: Identifiable, Hashable {
     var displayName: String { get }
     var description: String { get }
     var provider: ModelProvider { get }
-    
+
     // Language capabilities
     var isMultilingualModel: Bool { get }
     var supportedLanguages: [String: String] { get }
+
+    // Streaming capability - determines if model can stream or only batch
+    var streamingCapability: StreamingCapability { get }
 }
 
 extension TranscriptionModel {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
-    
+
     var language: String {
         isMultilingualModel ? "Multilingual" : "English-only"
+    }
+
+    // Default: most models only support batch transcription
+    var streamingCapability: StreamingCapability {
+        .batchOnly
     }
 }
 
@@ -47,6 +62,20 @@ struct NativeAppleModel: TranscriptionModel {
     let provider: ModelProvider = .nativeApple
     let isMultilingualModel: Bool
     let supportedLanguages: [String: String]
+}
+
+// A new struct for streaming transcription using Apple's SFSpeechRecognizer
+struct StreamingModel: TranscriptionModel {
+    let id = UUID()
+    let name: String
+    let displayName: String
+    let description: String
+    let provider: ModelProvider = .streaming
+    let isMultilingualModel: Bool
+    let supportedLanguages: [String: String]
+
+    // Apple Live streaming is streaming-only
+    var streamingCapability: StreamingCapability { .streamingOnly }
 }
 
 // A new struct for Parakeet models
@@ -64,6 +93,9 @@ struct ParakeetModel: TranscriptionModel {
         supportedLanguages.count > 1
     }
     let supportedLanguages: [String: String]
+
+    // Parakeet supports both batch and streaming (via FluidAudio streammsss branch)
+    var streamingCapability: StreamingCapability { .batchAndStreaming }
 }
 
 // A new struct for cloud models

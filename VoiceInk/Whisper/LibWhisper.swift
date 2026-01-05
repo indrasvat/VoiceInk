@@ -74,13 +74,18 @@ actor WhisperContext {
         if isVADEnabled, let vadModelPath = self.vadModelPath {
             params.vad = true
             params.vad_model_path = (vadModelPath as NSString).utf8String
-            
+
+            // Read user-configurable VAD timing parameters
+            let minSpeechDurationMs = UserDefaults.standard.object(forKey: "VADMinSpeechDurationMs") as? Int ?? 50
+            let minSilenceDurationMs = UserDefaults.standard.object(forKey: "VADMinSilenceDurationMs") as? Int ?? 80
+            let speechPadMs = UserDefaults.standard.object(forKey: "VADSpeechPadMs") as? Int ?? 100
+
             var vadParams = whisper_vad_default_params()
             vadParams.threshold = 0.50
-            vadParams.min_speech_duration_ms = 250
-            vadParams.min_silence_duration_ms = 100
+            vadParams.min_speech_duration_ms = Int32(minSpeechDurationMs)
+            vadParams.min_silence_duration_ms = Int32(minSilenceDurationMs)
             vadParams.max_speech_duration_s = Float.greatestFiniteMagnitude
-            vadParams.speech_pad_ms = 30
+            vadParams.speech_pad_ms = Int32(speechPadMs)
             vadParams.samples_overlap = 0.1
             params.vad_params = vadParams
         } else {

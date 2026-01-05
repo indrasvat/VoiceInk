@@ -28,6 +28,24 @@ class AudioEngineRecorder: ObservableObject {
 
     var onRecordingError: ((Error) -> Void)?
 
+    /// Callback for streaming audio buffers to speech recognition
+    /// The buffer is in the device's native format (not converted to 16kHz)
+    /// Thread-safe: accessed from main thread (set/clear) and audio processing queue (call)
+    nonisolated(unsafe) private let streamingCallbackLock = NSLock()
+    nonisolated(unsafe) private var _onAudioBufferForStreaming: ((AVAudioPCMBuffer) -> Void)?
+    nonisolated var onAudioBufferForStreaming: ((AVAudioPCMBuffer) -> Void)? {
+        get {
+            streamingCallbackLock.lock()
+            defer { streamingCallbackLock.unlock() }
+            return _onAudioBufferForStreaming
+        }
+        set {
+            streamingCallbackLock.lock()
+            _onAudioBufferForStreaming = newValue
+            streamingCallbackLock.unlock()
+        }
+    }
+
     private var validationTimer: Timer?
     private var hasReceivedValidBuffer = false
 
@@ -160,6 +178,7 @@ class AudioEngineRecorder: ObservableObject {
         recordingURL = nil
         isRecording = false
         hasReceivedValidBuffer = false
+        onAudioBufferForStreaming = nil
 
         currentAveragePower = 0.0
         currentPeakPower = 0.0
@@ -168,6 +187,9 @@ class AudioEngineRecorder: ObservableObject {
     nonisolated private func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
         updateMeters(from: buffer)
         writeBufferToFile(buffer)
+
+        // Send buffer to streaming service if callback is set
+        onAudioBufferForStreaming?(buffer)
     }
 
     nonisolated private func writeBufferToFile(_ buffer: AVAudioPCMBuffer) {

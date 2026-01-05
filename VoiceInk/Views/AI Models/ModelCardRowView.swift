@@ -56,6 +56,14 @@ struct ModelCardRowView: View {
                         setDefaultAction: setDefaultAction
                     )
                 }
+            case .streaming:
+                if let streamingModel = model as? StreamingModel {
+                    StreamingModelCardView(
+                        model: streamingModel,
+                        isCurrent: isCurrent,
+                        setDefaultAction: setDefaultAction
+                    )
+                }
             case .groq, .elevenLabs, .deepgram, .mistral, .gemini, .soniox:
                 if let cloudModel = model as? CloudModel {
                     CloudModelCardView(
