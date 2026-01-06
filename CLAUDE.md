@@ -236,6 +236,10 @@ defaults read /Applications/AppName.app/Contents/Info.plist CFBundleIdentifier
 - **KeyboardShortcuts** - Global hotkey handling
 - **SwiftData** - Persistence layer
 
+## Git Conventions
+
+Use clear, one-liner, relevant, atomic conventional commits only.
+
 ## Requirements
 
 - macOS 14.0+
