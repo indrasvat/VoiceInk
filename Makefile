@@ -3,7 +3,7 @@ DEPS_DIR := $(HOME)/VoiceInk-Dependencies
 WHISPER_CPP_DIR := $(DEPS_DIR)/whisper.cpp
 FRAMEWORK_PATH := $(WHISPER_CPP_DIR)/build-apple/whisper.xcframework
 
-.PHONY: all clean whisper setup build build-debug build-release check healthcheck help dev run install install-local clean-derived list open
+.PHONY: all clean whisper setup build build-debug build-release check healthcheck help dev run install install-local clean-derived list open logs launch
 
 # Default target
 all: check build
@@ -62,6 +62,20 @@ run:
 		echo "VoiceInk.app not found. Please run 'make build' first."; \
 		exit 1; \
 	fi
+
+# Launch installed app from ~/Applications
+launch:
+	@if [ -d ~/Applications/VoiceInk.app ]; then \
+		open ~/Applications/VoiceInk.app; \
+	else \
+		echo "VoiceInk.app not found in ~/Applications. Run 'make install-local' first."; \
+		exit 1; \
+	fi
+
+# Stream app logs (Ctrl+C to stop)
+logs:
+	@echo "Streaming VoiceInk logs (Ctrl+C to stop)..."
+	@log stream --predicate 'subsystem == "com.prakashjoshipax.VoiceInk" OR process == "VoiceInk"' --level debug
 
 # Cleanup
 clean:
@@ -125,6 +139,8 @@ help:
 	@echo "  Development:"
 	@echo "    dev              Build and run the app"
 	@echo "    run              Launch the built VoiceInk app"
+	@echo "    launch           Launch installed app from ~/Applications"
+	@echo "    logs             Stream app logs (Ctrl+C to stop)"
 	@echo "    open             Open project in Xcode"
 	@echo "    list             List available schemes"
 	@echo ""
